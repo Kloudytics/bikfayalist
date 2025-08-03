@@ -1,0 +1,124 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { prisma } from '@/lib/db'
+import { z } from 'zod'
+
+const listingSchema = z.object({
+  title: z.string().min(1).max(100),
+  description: z.string().min(10).max(2000),
+  price: z.number().positive(),
+  location: z.string().min(1),
+  categoryId: z.string(),
+  images: z.array(z.string()).optional(),
+})
+
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url)
+  const category = searchParams.get('category')
+  const search = searchParams.get('search')
+  const minPrice = searchParams.get('minPrice')
+  const maxPrice = searchParams.get('maxPrice')
+  const location = searchParams.get('location')
+  const page = parseInt(searchParams.get('page') || '1')
+  const limit = parseInt(searchParams.get('limit') || '12')
+
+  try {
+    const where: any = {
+      status: 'ACTIVE'
+    }
+
+    if (category) {
+      where.category = { slug: category }
+    }
+
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+      ]
+    }
+
+    if (minPrice || maxPrice) {
+      where.price = {}
+      if (minPrice) where.price.gte = parseFloat(minPrice)
+      if (maxPrice) where.price.lte = parseFloat(maxPrice)
+    }
+
+    if (location) {
+      where.location = { contains: location, mode: 'insensitive' }
+    }
+
+    const listings = await prisma.listing.findMany({
+      where,
+      include: {
+        category: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
+          }
+        }
+      },
+      orderBy: [
+        { featured: 'desc' },
+        { createdAt: 'desc' }
+      ],
+      skip: (page - 1) * limit,
+      take: limit,
+    })
+
+    const total = await prisma.listing.count({ where })
+
+    return NextResponse.json({
+      listings,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    })
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to fetch listings' }, { status: 500 })
+  }
+}
+
+export async function POST(req: NextRequest) {
+  const session = await getServerSession(authOptions)
+  
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  try {
+    const body = await req.json()
+    const validatedData = listingSchema.parse(body)
+
+    const listing = await prisma.listing.create({
+      data: {
+        ...validatedData,
+        images: JSON.stringify(validatedData.images || []),
+        userId: session.user.id,
+      },
+      include: {
+        category: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
+          }
+        }
+      }
+    })
+
+    return NextResponse.json(listing, { status: 201 })
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: error.errors }, { status: 400 })
+    }
+    return NextResponse.json({ error: 'Failed to create listing' }, { status: 500 })
+  }
+}
