@@ -23,6 +23,7 @@ export default function ListingDetailPage() {
   const [selectedImage, setSelectedImage] = useState(0)
   const [message, setMessage] = useState('')
   const [sendingMessage, setSendingMessage] = useState(false)
+  const [hasRecordedView, setHasRecordedView] = useState(false)
 
   useEffect(() => {
     fetchListing()
@@ -34,6 +35,11 @@ export default function ListingDetailPage() {
       if (response.ok) {
         const data = await response.json()
         setListing(data)
+        
+        // Record view only once after successfully fetching listing
+        if (!hasRecordedView) {
+          recordView()
+        }
       } else {
         toast.error('Listing not found')
       }
@@ -42,6 +48,28 @@ export default function ListingDetailPage() {
       toast.error('Failed to load listing')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const recordView = async () => {
+    try {
+      const response = await fetch(`/api/listings/${id}/view`, {
+        method: 'POST'
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        // Update the listing's view count in state
+        setListing((prev: any) => ({
+          ...prev,
+          views: data.views
+        }))
+        setHasRecordedView(true)
+      }
+    } catch (error) {
+      console.error('Failed to record view:', error)
+      // Still mark as recorded to prevent retries
+      setHasRecordedView(true)
     }
   }
 

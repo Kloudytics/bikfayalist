@@ -29,12 +29,6 @@ export async function GET(
       return NextResponse.json({ error: 'Listing not found' }, { status: 404 })
     }
 
-    // Increment view count
-    await prisma.listing.update({
-      where: { id: id },
-      data: { views: { increment: 1 } }
-    })
-
     return NextResponse.json(listing)
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch listing' }, { status: 500 })
