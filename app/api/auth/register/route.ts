@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
         name,
         email,
         password: hashedPassword,
-        role: 'USER', // Default role
+        // role defaults to USER in schema
       },
       select: {
         id: true,
@@ -79,7 +79,10 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error',
+        details: process.env.NODE_ENV === 'development' ? String(error) : undefined
+      },
       { status: 500 }
     )
   }
