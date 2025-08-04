@@ -84,6 +84,7 @@ model Listing {
   user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages    Message[]
   favorites   Favorite[]
+  productViews ProductView[]
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 }
@@ -107,6 +108,21 @@ model Favorite {
   createdAt DateTime @default(now())
 
   @@unique([userId, listingId])
+}
+
+model ProductView {
+  id        String   @id @default(cuid())
+  listingId String
+  ipAddress String
+  userAgent String?
+  userId    String?  // Optional: track authenticated users too
+  viewedAt  DateTime @default(now())
+  
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  
+  @@unique([listingId, ipAddress])
+  @@index([listingId])
+  @@index([ipAddress])
 }
 
 enum Role {
