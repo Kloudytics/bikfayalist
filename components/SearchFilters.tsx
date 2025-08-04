@@ -105,7 +105,7 @@ export default function SearchFilters({ onFiltersChange, categories, initialFilt
               placeholder="Search listings..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
+              className="pl-10 text-gray-900"
             />
           </div>
         </div>
@@ -136,6 +136,7 @@ export default function SearchFilters({ onFiltersChange, categories, initialFilt
               placeholder="Min"
               value={minPrice}
               onChange={(e) => setMinPrice(e.target.value)}
+              className="text-gray-900"
             />
           </div>
           <div>
@@ -146,6 +147,7 @@ export default function SearchFilters({ onFiltersChange, categories, initialFilt
               placeholder="Max"
               value={maxPrice}
               onChange={(e) => setMaxPrice(e.target.value)}
+              className="text-gray-900"
             />
           </div>
         </div>
@@ -157,6 +159,7 @@ export default function SearchFilters({ onFiltersChange, categories, initialFilt
             placeholder="City or area"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
+            className="text-gray-900"
           />
         </div>
 

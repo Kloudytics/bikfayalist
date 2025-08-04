@@ -40,8 +40,8 @@ export async function GET(req: NextRequest) {
 
     if (search) {
       where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
+        { title: { contains: search } },
+        { description: { contains: search } },
       ]
     }
 
@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (location) {
-      where.location = { contains: location, mode: 'insensitive' }
+      where.location = { contains: location }
     }
 
     const listings = await prisma.listing.findMany({
