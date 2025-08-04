@@ -49,6 +49,7 @@ model User {
   listings      Listing[]
   messages      Message[]
   favorites     Favorite[]
+  termsAcceptances TermsAcceptance[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -123,6 +124,23 @@ model ProductView {
   @@unique([listingId, ipAddress])
   @@index([listingId])
   @@index([ipAddress])
+}
+
+model TermsAcceptance {
+  id              String   @id @default(cuid())
+  userId          String
+  termsVersion    String   // Version identifier (e.g., "1.0", "2.1")
+  privacyVersion  String   // Privacy policy version
+  acceptedAt      DateTime @default(now())
+  ipAddress       String?  // IP address when accepted
+  userAgent       String?  // Browser/device info
+  
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, termsVersion, privacyVersion])
+  @@index([userId])
+  @@index([termsVersion])
+  @@index([privacyVersion])
 }
 
 enum Role {

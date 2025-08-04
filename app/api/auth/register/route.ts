@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { hash } from 'bcryptjs'
 import { prisma } from '@/lib/db'
+import { getClientIP } from '@/lib/ip'
 import { z } from 'zod'
 
 // Strong password validation schema
@@ -15,6 +16,9 @@ const registerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(50, 'Name must be less than 50 characters'),
   email: z.string().email('Please enter a valid email address'),
   password: passwordSchema,
+  acceptedTerms: z.boolean().refine(val => val === true, {
+    message: 'You must accept the Terms of Service and Privacy Policy'
+  }),
 })
 
 export async function POST(req: NextRequest) {
@@ -23,7 +27,7 @@ export async function POST(req: NextRequest) {
     
     // Validate input data
     const validatedData = registerSchema.parse(body)
-    const { name, email, password } = validatedData
+    const { name, email, password, acceptedTerms } = validatedData
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -40,27 +44,47 @@ export async function POST(req: NextRequest) {
     // Hash password
     const hashedPassword = await hash(password, 12)
 
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        // role defaults to USER in schema
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        createdAt: true,
-      }
+    // Get client IP and user agent for terms acceptance record
+    const clientIP = getClientIP(req)
+    const userAgent = req.headers.get('user-agent')
+
+    // Create user and record terms acceptance in a transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // Create user
+      const user = await tx.user.create({
+        data: {
+          name,
+          email,
+          password: hashedPassword,
+          // role defaults to USER in schema
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          createdAt: true,
+        }
+      })
+
+      // Record terms acceptance
+      await tx.termsAcceptance.create({
+        data: {
+          userId: user.id,
+          termsVersion: '1.0', // Current terms version
+          privacyVersion: '1.0', // Current privacy policy version
+          ipAddress: clientIP,
+          userAgent: userAgent,
+        }
+      })
+
+      return user
     })
 
     return NextResponse.json(
       { 
         message: 'Account created successfully!',
-        user 
+        user: result 
       },
       { status: 201 }
     )

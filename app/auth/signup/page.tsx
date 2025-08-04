@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
 
 // Password validation function
@@ -45,10 +46,17 @@ export default function SignUpPage() {
   })
   const [isLoading, setIsLoading] = useState(false)
   const [passwordErrors, setPasswordErrors] = useState<string[]>([])
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Validate terms acceptance
+    if (!acceptedTerms) {
+      toast.error('Please accept the Terms of Service and Privacy Policy to continue')
+      return
+    }
     
     // Validate password strength
     const passwordValidationErrors = validatePassword(formData.password)
@@ -76,6 +84,7 @@ export default function SignUpPage() {
           name: formData.name,
           email: formData.email,
           password: formData.password,
+          acceptedTerms,
         }),
       })
 
@@ -195,7 +204,33 @@ export default function SignUpPage() {
                 />
               </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              {/* Terms and Privacy Acceptance */}
+              <div className="flex items-start space-x-3">
+                <Checkbox 
+                  id="acceptTerms"
+                  checked={acceptedTerms}
+                  onCheckedChange={(checked) => setAcceptedTerms(checked === true)}
+                  className="mt-1"
+                />
+                <div className="text-sm">
+                  <Label htmlFor="acceptTerms" className="text-sm font-normal cursor-pointer">
+                    I agree to the{' '}
+                    <Link href="/terms" target="_blank" className="font-medium text-blue-600 hover:text-blue-500 underline">
+                      Terms of Service
+                    </Link>
+                    {' '}and{' '}
+                    <Link href="/privacy" target="_blank" className="font-medium text-blue-600 hover:text-blue-500 underline">
+                      Privacy Policy
+                    </Link>
+                  </Label>
+                </div>
+              </div>
+
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={isLoading || !acceptedTerms}
+              >
                 {isLoading ? 'Creating account...' : 'Create account'}
               </Button>
             </form>
