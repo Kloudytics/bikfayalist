@@ -54,16 +54,13 @@ export default function FavoritesPage() {
 
   const fetchFavorites = async () => {
     try {
-      const response = await fetch('/api/listings?limit=20')
+      const response = await fetch('/api/favorites')
+      if (!response.ok) {
+        throw new Error('Failed to fetch favorites')
+      }
+      
       const data = await response.json()
-      
-      const mockFavorites = (data.listings || []).slice(0, 6).map((listing: Listing) => ({
-        ...listing,
-        favoriteId: `fav_${listing.id}`,
-        favoritedAt: new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 7)
-      }))
-      
-      setFavorites(mockFavorites)
+      setFavorites(data.favorites || [])
     } catch (error) {
       console.error('Failed to fetch favorites:', error)
       toast.error('Failed to load favorites')
@@ -104,8 +101,16 @@ export default function FavoritesPage() {
 
   const handleRemoveFavorite = async (favoriteId: string) => {
     try {
-      setFavorites(favorites.filter((fav) => fav.favoriteId !== favoriteId))
-      toast.success('Removed from favorites')
+      const response = await fetch(`/api/favorites/${favoriteId}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        setFavorites(favorites.filter((fav) => fav.favoriteId !== favoriteId))
+        toast.success('Removed from favorites')
+      } else {
+        toast.error('Failed to remove from favorites')
+      }
     } catch (error) {
       console.error('Failed to remove favorite:', error)
       toast.error('Failed to remove favorite')
@@ -116,6 +121,12 @@ export default function FavoritesPage() {
     if (!confirm('Are you sure you want to remove all favorites?')) return
 
     try {
+      // Delete all favorites one by one
+      const deletePromises = favorites.map(favorite => 
+        fetch(`/api/favorites/${favorite.favoriteId}`, { method: 'DELETE' })
+      )
+      
+      await Promise.all(deletePromises)
       setFavorites([])
       toast.success('All favorites cleared')
     } catch (error) {
