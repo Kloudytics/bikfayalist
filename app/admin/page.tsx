@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -154,8 +155,10 @@ export default function AdminPage() {
                     </TableCell>
                     <TableCell>{user._count.listings}</TableCell>
                     <TableCell>
-                      <Button size="sm" variant="outline">
-                        View
+                      <Button size="sm" variant="outline" asChild>
+                        <Link href={`/dashboard?userId=${user.id}`}>
+                          View Listings
+                        </Link>
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -194,8 +197,10 @@ export default function AdminPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Button size="sm" variant="outline">
-                        View
+                      <Button size="sm" variant="outline" asChild>
+                        <Link href={`/listing/${listing.id}`}>
+                          View Listing
+                        </Link>
                       </Button>
                     </TableCell>
                   </TableRow>

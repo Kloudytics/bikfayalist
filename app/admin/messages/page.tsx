@@ -21,6 +21,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { 
   Search, 
@@ -38,7 +44,6 @@ import { toast } from 'sonner'
 export default function AdminMessagesPage() {
   const { data: session, status } = useSession()
   const [messages, setMessages] = useState<any[]>([])
-  const [filteredMessages, setFilteredMessages] = useState<any[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({
@@ -46,6 +51,9 @@ export default function AdminMessagesPage() {
     activeConversations: 0,
     flaggedMessages: 0,
   })
+  const [selectedConversation, setSelectedConversation] = useState<any>(null)
+  const [conversationMessages, setConversationMessages] = useState<any[]>([])
+  const [conversationLoading, setConversationLoading] = useState(false)
 
   useEffect(() => {
     if (status === 'loading') return
@@ -58,40 +66,25 @@ export default function AdminMessagesPage() {
   }, [session, status])
 
   useEffect(() => {
-    filterMessages()
-  }, [messages, searchQuery])
+    const timeoutId = setTimeout(() => {
+      fetchMessages()
+    }, 300)
+
+    return () => clearTimeout(timeoutId)
+  }, [searchQuery])
 
   const fetchMessages = async () => {
     try {
-      // For now, we'll use mock data since we need to create an admin endpoint
-      // In a real implementation, you'd have /api/admin/messages
-      const mockMessages = [
-        {
-          id: '1',
-          content: 'Hi! Is this iPhone still available?',
-          fromUser: { id: '2', name: 'John Doe', image: null },
-          listing: { id: '1', title: 'iPhone 14 Pro Max', user: { name: 'Jane Smith' } },
-          createdAt: new Date(Date.now() - 1000 * 60 * 30),
-          flagged: false
-        },
-        {
-          id: '2',
-          content: 'Yes, it is! Are you interested in seeing it?',
-          fromUser: { id: '3', name: 'Jane Smith', image: null },
-          listing: { id: '1', title: 'iPhone 14 Pro Max', user: { name: 'Jane Smith' } },
-          createdAt: new Date(Date.now() - 1000 * 60 * 15),
-          flagged: false
-        },
-        {
-          id: '3',
-          content: 'This is a suspicious message that might be spam',
-          fromUser: { id: '4', name: 'Suspicious User', image: null },
-          listing: { id: '2', title: 'MacBook Pro', user: { name: 'John Doe' } },
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2),
-          flagged: true
-        }
-      ]
-      setMessages(mockMessages)
+      const params = new URLSearchParams()
+      if (searchQuery) params.append('search', searchQuery)
+      
+      const response = await fetch(`/api/admin/messages?${params.toString()}`)
+      if (response.ok) {
+        const data = await response.json()
+        setMessages(data.messages || [])
+      } else {
+        toast.error('Failed to load messages')
+      }
     } catch (error) {
       console.error('Failed to fetch messages:', error)
       toast.error('Failed to load messages')
@@ -102,54 +95,86 @@ export default function AdminMessagesPage() {
 
   const fetchStats = async () => {
     try {
-      // Mock stats - in real app, would fetch from /api/admin/messages/stats
-      setStats({
-        totalMessages: 156,
-        activeConversations: 42,
-        flaggedMessages: 3,
-      })
+      const response = await fetch('/api/admin/messages/stats')
+      if (response.ok) {
+        const data = await response.json()
+        setStats(data)
+      }
     } catch (error) {
       console.error('Failed to fetch stats:', error)
     }
   }
 
-  const filterMessages = () => {
-    let filtered = messages
-
-    if (searchQuery) {
-      filtered = filtered.filter((message: any) =>
-        message.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        message.fromUser.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        message.listing.title.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    }
-
-    setFilteredMessages(filtered)
-  }
 
   const handleDeleteMessage = async (messageId: string) => {
     if (!confirm('Are you sure you want to delete this message?')) return
 
     try {
-      // In a real app, you'd call the API to delete the message
-      setMessages(messages.filter((message: any) => message.id !== messageId))
-      toast.success('Message deleted successfully')
+      const response = await fetch(`/api/admin/messages/${messageId}`, {
+        method: 'DELETE'
+      })
+      
+      if (response.ok) {
+        setMessages(messages.filter((message: any) => message.id !== messageId))
+        toast.success('Message deleted successfully')
+        // Refresh stats
+        fetchStats()
+      } else {
+        toast.error('Failed to delete message')
+      }
     } catch (error) {
+      console.error('Failed to delete message:', error)
       toast.error('Failed to delete message')
     }
   }
 
   const handleFlagMessage = async (messageId: string) => {
     try {
-      // In a real app, you'd call the API to flag/unflag the message
-      setMessages(messages.map((message: any) => 
-        message.id === messageId 
-          ? { ...message, flagged: !message.flagged }
-          : message
-      ))
-      toast.success('Message flag status updated')
+      const currentMessage = messages.find((m: any) => m.id === messageId)
+      if (!currentMessage) return
+
+      const response = await fetch(`/api/admin/messages/${messageId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ flagged: !currentMessage.flagged })
+      })
+      
+      if (response.ok) {
+        const updatedMessage = await response.json()
+        setMessages(messages.map((message: any) => 
+          message.id === messageId ? updatedMessage : message
+        ))
+        toast.success('Message flag status updated')
+        // Refresh stats
+        fetchStats()
+      } else {
+        toast.error('Failed to update message')
+      }
     } catch (error) {
+      console.error('Failed to update message:', error)
       toast.error('Failed to update message')
+    }
+  }
+
+  const handleViewConversation = async (message: any) => {
+    setSelectedConversation(message)
+    setConversationLoading(true)
+    
+    try {
+      const response = await fetch(`/api/admin/messages/conversation?listingId=${message.listing.id}&fromUserId=${message.fromUser.id}`)
+      if (response.ok) {
+        const data = await response.json()
+        setConversationMessages(data.messages || [])
+      } else {
+        toast.error('Failed to load conversation')
+      }
+    } catch (error) {
+      console.error('Failed to fetch conversation:', error)
+      toast.error('Failed to load conversation')
+    } finally {
+      setConversationLoading(false)
     }
   }
 
@@ -241,7 +266,7 @@ export default function AdminMessagesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredMessages.map((message: any) => (
+                {messages.map((message: any) => (
                   <TableRow key={message.id}>
                     <TableCell>
                       <div className="flex items-center space-x-3">
@@ -284,7 +309,7 @@ export default function AdminMessagesPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleViewConversation(message)}>
                             <Eye className="w-4 h-4 mr-2" />
                             View Conversation
                           </DropdownMenuItem>
@@ -309,6 +334,60 @@ export default function AdminMessagesPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Conversation Modal */}
+      <Dialog open={!!selectedConversation} onOpenChange={() => setSelectedConversation(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Conversation about: {selectedConversation?.listing?.title}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {conversationLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+              <span className="ml-2">Loading conversation...</span>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="text-sm text-gray-600 mb-4">
+                Between: <strong>{selectedConversation?.fromUser?.name}</strong> and{' '}
+                <strong>{selectedConversation?.listing?.user?.name}</strong>
+              </div>
+              
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {conversationMessages.map((msg: any) => (
+                  <div key={msg.id} className="flex items-start space-x-3">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={msg.fromUser.image || ''} />
+                      <AvatarFallback>
+                        {msg.fromUser.name?.charAt(0) || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span className="font-medium text-sm">{msg.fromUser.name}</span>
+                        <span className="text-xs text-gray-500">
+                          {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}
+                        </span>
+                        {msg.flagged && (
+                          <Badge variant="destructive" className="text-xs">Flagged</Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-700">{msg.content}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {conversationMessages.length === 0 && (
+                <p className="text-center text-gray-500 py-4">No messages found in this conversation.</p>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

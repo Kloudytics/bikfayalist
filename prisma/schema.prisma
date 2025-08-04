@@ -95,6 +95,7 @@ model Message {
   content   String
   fromUserId String
   listingId String
+  flagged   Boolean  @default(false)
   fromUser  User     @relation(fields: [fromUserId], references: [id])
   listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())

@@ -398,6 +398,53 @@ async function main() {
     }
   }
 
+  // Create sample messages
+  const sampleListings = await prisma.listing.findMany({ take: 5 })
+  const sampleUsers = await prisma.user.findMany({ take: 3 })
+
+  if (sampleListings.length > 0 && sampleUsers.length > 0) {
+    const messages = [
+      {
+        content: 'Hi! Is this item still available?',
+        fromUserId: sampleUsers[1]?.id,
+        listingId: sampleListings[0]?.id,
+        flagged: false,
+      },
+      {
+        content: 'Yes, it is! Would you like to see it?',
+        fromUserId: sampleUsers[0]?.id,
+        listingId: sampleListings[0]?.id,
+        flagged: false,
+      },
+      {
+        content: 'Great! When can we meet?',
+        fromUserId: sampleUsers[1]?.id,
+        listingId: sampleListings[0]?.id,
+        flagged: false,
+      },
+      {
+        content: 'This is a spam message with suspicious content',
+        fromUserId: sampleUsers[2]?.id,
+        listingId: sampleListings[1]?.id,
+        flagged: true,
+      },
+      {
+        content: 'What\'s your best price for this?',
+        fromUserId: sampleUsers[1]?.id,
+        listingId: sampleListings[2]?.id,
+        flagged: false,
+      },
+    ]
+
+    for (const message of messages) {
+      if (message.fromUserId && message.listingId) {
+        await prisma.message.create({
+          data: message,
+        })
+      }
+    }
+  }
+
   console.log('Database seeded successfully!')
 }
 
