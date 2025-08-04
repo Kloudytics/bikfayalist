@@ -42,6 +42,7 @@ function BrowseContent() {
   const [categories, setCategories] = useState<Category[]>([])
   const [pagination, setPagination] = useState<Pagination>({ page: 1, pages: 1, total: 0 })
   const [loading, setLoading] = useState(true)
+  const [isFiltering, setIsFiltering] = useState(false)
   const searchParams = useSearchParams()
 
   useEffect(() => {
@@ -56,7 +57,8 @@ function BrowseContent() {
       maxPrice: searchParams.get('maxPrice') || undefined,
       location: searchParams.get('location') || undefined,
     }
-    fetchListings(filters)
+    const page = parseInt(searchParams.get('page') || '1')
+    fetchListings(filters, page)
   }, [searchParams])
 
   const fetchCategories = async () => {
@@ -70,8 +72,13 @@ function BrowseContent() {
     }
   }
 
-  const fetchListings = async (filters: any = {}, page = 1) => {
-    setLoading(true)
+  const fetchListings = async (filters: any = {}, page = 1, isFilteringUpdate = false) => {
+    if (isFilteringUpdate) {
+      setIsFiltering(true)
+    } else {
+      setLoading(true)
+    }
+
     try {
       const params = new URLSearchParams()
       Object.entries(filters).forEach(([key, value]) => {
@@ -88,7 +95,11 @@ function BrowseContent() {
       console.error('Failed to fetch listings:', error)
       setListings([])
     } finally {
-      setLoading(false)
+      if (isFilteringUpdate) {
+        setIsFiltering(false)
+      } else {
+        setLoading(false)
+      }
     }
   }
 
@@ -101,11 +112,18 @@ function BrowseContent() {
     const newUrl = `/browse${params.toString() ? `?${params.toString()}` : ''}`
     window.history.pushState({}, '', newUrl)
     
-    fetchListings(filters)
+    fetchListings(filters, 1, true) // Mark as filtering update for smooth UX
   }
 
   const handlePageChange = (newPage: number) => {
     const currentParams = Object.fromEntries(searchParams.entries())
+    
+    // Update URL with new page parameter
+    const params = new URLSearchParams(currentParams)
+    params.set('page', newPage.toString())
+    const newUrl = `/browse?${params.toString()}`
+    window.history.pushState({}, '', newUrl)
+    
     fetchListings(currentParams, newPage)
   }
 
@@ -135,9 +153,17 @@ function BrowseContent() {
         {/* Listings Grid */}
         <div className="lg:col-span-3">
           <div className="mb-6 flex justify-between items-center">
-            <p className="text-gray-600">
-              {pagination.total} {pagination.total === 1 ? 'listing' : 'listings'} found
-            </p>
+            <div className="flex items-center space-x-3">
+              <p className="text-gray-600">
+                {pagination.total} {pagination.total === 1 ? 'listing' : 'listings'} found
+              </p>
+              {isFiltering && (
+                <div className="flex items-center space-x-2 text-blue-600">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                  <span className="text-sm">Filtering...</span>
+                </div>
+              )}
+            </div>
           </div>
 
           {loading ? (
@@ -155,7 +181,9 @@ function BrowseContent() {
             </div>
           ) : listings.length > 0 ? (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+              <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 transition-opacity duration-200 ${
+                isFiltering ? 'opacity-70' : 'opacity-100'
+              }`}>
                 {Array.isArray(listings) && listings.map((listing) => (
                   <ListingCard key={listing.id} listing={listing} />
                 ))}
@@ -163,24 +191,105 @@ function BrowseContent() {
 
               {/* Pagination */}
               {pagination.pages > 1 && (
-                <div className="flex justify-center items-center space-x-2">
+                <div className="flex justify-center items-center space-x-1">
+                  {/* Previous Button */}
                   <Button
                     variant="outline"
+                    size="sm"
                     disabled={pagination.page <= 1}
                     onClick={() => handlePageChange(pagination.page - 1)}
+                    className="px-3"
                   >
                     <ChevronLeft className="w-4 h-4" />
                     Previous
                   </Button>
                   
-                  <span className="px-4 py-2 text-sm text-gray-600">
-                    Page {pagination.page} of {pagination.pages}
-                  </span>
+                  {/* Page Numbers */}
+                  <div className="flex space-x-1 mx-2">
+                    {(() => {
+                      const currentPage = pagination.page
+                      const totalPages = pagination.pages
+                      const pages = []
+                      
+                      // Always show first page
+                      if (totalPages > 1) {
+                        pages.push(
+                          <Button
+                            key={1}
+                            variant={currentPage === 1 ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handlePageChange(1)}
+                            className="w-10 h-10 p-0"
+                          >
+                            1
+                          </Button>
+                        )
+                      }
+                      
+                      // Show ellipsis if current page is far from start
+                      if (currentPage > 4) {
+                        pages.push(
+                          <span key="ellipsis1" className="px-2 text-gray-500">
+                            ...
+                          </span>
+                        )
+                      }
+                      
+                      // Show pages around current page
+                      const startPage = Math.max(2, currentPage - 1)
+                      const endPage = Math.min(totalPages - 1, currentPage + 1)
+                      
+                      for (let i = startPage; i <= endPage; i++) {
+                        if (i !== 1 && i !== totalPages) {
+                          pages.push(
+                            <Button
+                              key={i}
+                              variant={currentPage === i ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => handlePageChange(i)}
+                              className="w-10 h-10 p-0"
+                            >
+                              {i}
+                            </Button>
+                          )
+                        }
+                      }
+                      
+                      // Show ellipsis if current page is far from end
+                      if (currentPage < totalPages - 3) {
+                        pages.push(
+                          <span key="ellipsis2" className="px-2 text-gray-500">
+                            ...
+                          </span>
+                        )
+                      }
+                      
+                      // Always show last page
+                      if (totalPages > 1) {
+                        pages.push(
+                          <Button
+                            key={totalPages}
+                            variant={currentPage === totalPages ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handlePageChange(totalPages)}
+                            className="w-10 h-10 p-0"
+                          >
+                            {totalPages}
+                          </Button>
+                        )
+                      }
+                      
+                      return pages
+                    })()}
+                  </div>
                   
+                  {/* Next Button */}
                   <Button
                     variant="outline"
+                    size="sm"
                     disabled={pagination.page >= pagination.pages}
                     onClick={() => handlePageChange(pagination.page + 1)}
+                    className="px-3"
                   >
                     Next
                     <ChevronRight className="w-4 h-4" />
