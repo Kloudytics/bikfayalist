@@ -19,12 +19,19 @@ export async function GET(req: NextRequest) {
   const minPrice = searchParams.get('minPrice')
   const maxPrice = searchParams.get('maxPrice')
   const location = searchParams.get('location')
+  const userId = searchParams.get('userId')
   const page = parseInt(searchParams.get('page') || '1')
   const limit = parseInt(searchParams.get('limit') || '12')
 
   try {
-    const where: any = {
-      status: 'ACTIVE'
+    const where: any = {}
+
+    // If userId is provided, show all listings for that user (any status)
+    // Otherwise, only show ACTIVE listings for public browsing
+    if (userId) {
+      where.userId = userId
+    } else {
+      where.status = 'ACTIVE'
     }
 
     if (category) {
