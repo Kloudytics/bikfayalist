@@ -122,6 +122,13 @@ function BrowseContent() {
           <SearchFilters
             categories={categories}
             onFiltersChange={handleFiltersChange}
+            initialFilters={{
+              search: searchParams.get('search') || '',
+              category: searchParams.get('category') || 'all',
+              minPrice: searchParams.get('minPrice') || '',
+              maxPrice: searchParams.get('maxPrice') || '',
+              location: searchParams.get('location') || '',
+            }}
           />
         </div>
 

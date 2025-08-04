@@ -37,8 +37,8 @@ import { toast } from 'sonner'
 
 export default function AdminMessagesPage() {
   const { data: session, status } = useSession()
-  const [messages, setMessages] = useState([])
-  const [filteredMessages, setFilteredMessages] = useState([])
+  const [messages, setMessages] = useState<any[]>([])
+  const [filteredMessages, setFilteredMessages] = useState<any[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({

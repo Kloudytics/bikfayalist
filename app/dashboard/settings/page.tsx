@@ -140,7 +140,7 @@ export default function SettingsPage() {
             <form onSubmit={handleSaveProfile} className="space-y-6">
               <div className="flex items-center space-x-6">
                 <Avatar className="w-20 h-20">
-                  <AvatarImage src={session?.user?.image || ''} />
+                  <AvatarImage src={(session?.user as any)?.image || ''} />
                   <AvatarFallback className="text-lg">
                     {session?.user?.name?.charAt(0) || session?.user?.email?.charAt(0)}
                   </AvatarFallback>

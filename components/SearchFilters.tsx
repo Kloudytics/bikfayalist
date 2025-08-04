@@ -17,14 +17,21 @@ import { Search, Filter } from 'lucide-react'
 interface SearchFiltersProps {
   onFiltersChange: (filters: any) => void
   categories: Array<{ id: string; name: string; slug: string }>
+  initialFilters?: {
+    search: string
+    category: string
+    minPrice: string
+    maxPrice: string
+    location: string
+  }
 }
 
-export default function SearchFilters({ onFiltersChange, categories }: SearchFiltersProps) {
-  const [search, setSearch] = useState('')
-  const [category, setCategory] = useState('all')
-  const [minPrice, setMinPrice] = useState('')
-  const [maxPrice, setMaxPrice] = useState('')
-  const [location, setLocation] = useState('')
+export default function SearchFilters({ onFiltersChange, categories, initialFilters }: SearchFiltersProps) {
+  const [search, setSearch] = useState(initialFilters?.search || '')
+  const [category, setCategory] = useState(initialFilters?.category || 'all')
+  const [minPrice, setMinPrice] = useState(initialFilters?.minPrice || '')
+  const [maxPrice, setMaxPrice] = useState(initialFilters?.maxPrice || '')
+  const [location, setLocation] = useState(initialFilters?.location || '')
 
   const handleSearch = () => {
     onFiltersChange({
@@ -44,6 +51,17 @@ export default function SearchFilters({ onFiltersChange, categories }: SearchFil
     setLocation('')
     onFiltersChange({})
   }
+
+  // Update state when initialFilters change (e.g., when navigating from categories)
+  useEffect(() => {
+    if (initialFilters) {
+      setSearch(initialFilters.search || '')
+      setCategory(initialFilters.category || 'all')
+      setMinPrice(initialFilters.minPrice || '')
+      setMaxPrice(initialFilters.maxPrice || '')
+      setLocation(initialFilters.location || '')
+    }
+  }, [initialFilters])
 
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
