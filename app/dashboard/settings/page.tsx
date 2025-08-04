@@ -35,17 +35,30 @@ export default function SettingsPage() {
     if (status === 'loading') return
     if (!session) redirect('/auth/signin')
     
-    // Initialize form with user data
-    if (session.user) {
-      setFormData({
-        name: session.user.name || '',
-        email: session.user.email || '',
-        bio: '',
-        phone: '',
-        location: '',
-      })
-    }
+    // Fetch user profile data from database
+    fetchUserProfile()
   }, [session, status])
+
+  const fetchUserProfile = async () => {
+    try {
+      const response = await fetch('/api/profile')
+      if (response.ok) {
+        const data = await response.json()
+        setFormData({
+          name: data.user.name || '',
+          email: data.user.email || '',
+          bio: data.user.bio || '',
+          phone: data.user.phone || '',
+          location: data.user.location || '',
+        })
+      } else {
+        toast.error('Failed to load profile data')
+      }
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error)
+      toast.error('Failed to load profile')
+    }
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({
@@ -66,20 +79,38 @@ export default function SettingsPage() {
     setLoading(true)
 
     try {
-      // In a real app, you'd make an API call to update the user profile
-      await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API call
-      
-      // Update the session
-      await update({
-        ...session,
-        user: {
-          ...session?.user,
+      const response = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           name: formData.name,
-        }
+          bio: formData.bio,
+          phone: formData.phone,
+          location: formData.location,
+        }),
       })
-      
-      toast.success('Profile updated successfully!')
+
+      if (response.ok) {
+        const data = await response.json()
+        
+        // Update the session with new name
+        await update({
+          ...session,
+          user: {
+            ...session?.user,
+            name: data.user.name,
+          }
+        })
+        
+        toast.success('Profile updated successfully!')
+      } else {
+        const error = await response.json()
+        toast.error(error.message || 'Failed to update profile')
+      }
     } catch (error) {
+      console.error('Failed to update profile:', error)
       toast.error('Failed to update profile')
     } finally {
       setLoading(false)
