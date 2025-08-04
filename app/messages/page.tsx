@@ -14,41 +14,15 @@ import { Search, MessageCircle, Send, ArrowLeft } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { toast } from 'sonner'
 
-interface Conversation {
-  id: string
-  otherUser: {
-    id: string
-    name: string
-    image: string | null
-  }
-  listing: {
-    id: string
-    title: string
-    price: number
-  }
-  lastMessage: string
-  lastMessageTime: Date
-  unreadCount: number
-}
-
-interface Message {
-  id: string
-  content: string
-  fromUserId: string
-  createdAt: Date
-  fromUser: {
-    name: string | null
-  }
-}
-
 export default function MessagesPage() {
   const { data: session, status } = useSession()
-  const [conversations, setConversations] = useState<Conversation[]>([])
-  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
-  const [messages, setMessages] = useState<Message[]>([])
+  const [conversations, setConversations] = useState([])
+  const [selectedConversation, setSelectedConversation] = useState(null)
+  const [messages, setMessages] = useState([])
   const [newMessage, setNewMessage] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
+  const [sendingMessage, setSendingMessage] = useState(false)
 
   useEffect(() => {
     if (status === 'loading') return
@@ -59,25 +33,13 @@ export default function MessagesPage() {
 
   const fetchConversations = async () => {
     try {
-      const mockConversations: Conversation[] = [
-        {
-          id: '1',
-          otherUser: { id: '2', name: 'John Doe', image: null },
-          listing: { id: '1', title: 'iPhone 14 Pro Max', price: 899 },
-          lastMessage: 'Is this still available?',
-          lastMessageTime: new Date(Date.now() - 1000 * 60 * 30),
-          unreadCount: 2
-        },
-        {
-          id: '2',
-          otherUser: { id: '3', name: 'Jane Smith', image: null },
-          listing: { id: '2', title: 'MacBook Pro', price: 2800 },
-          lastMessage: 'Thanks for the quick response!',
-          lastMessageTime: new Date(Date.now() - 1000 * 60 * 60 * 2),
-          unreadCount: 0
-        }
-      ]
-      setConversations(mockConversations)
+      const response = await fetch('/api/messages')
+      if (response.ok) {
+        const data = await response.json()
+        setConversations(data)
+      } else {
+        toast.error('Failed to load conversations')
+      }
     } catch (error) {
       console.error('Failed to fetch conversations:', error)
       toast.error('Failed to load conversations')
@@ -88,37 +50,20 @@ export default function MessagesPage() {
 
   const fetchMessages = async (conversationId: string) => {
     try {
-      const mockMessages: Message[] = [
-        {
-          id: '1',
-          content: 'Hi! Is this iPhone still available?',
-          fromUserId: '2',
-          createdAt: new Date(Date.now() - 1000 * 60 * 60),
-          fromUser: { name: 'John Doe' }
-        },
-        {
-          id: '2',
-          content: 'Yes, it is! Are you interested in seeing it?',
-          fromUserId: session?.user?.id || '',
-          createdAt: new Date(Date.now() - 1000 * 60 * 30),
-          fromUser: { name: session?.user?.name || null }
-        },
-        {
-          id: '3',
-          content: 'Definitely! When would be a good time to meet?',
-          fromUserId: '2',
-          createdAt: new Date(Date.now() - 1000 * 60 * 15),
-          fromUser: { name: 'John Doe' }
-        }
-      ]
-      setMessages(mockMessages)
+      const response = await fetch(`/api/messages?listingId=${conversationId}`)
+      if (response.ok) {
+        const data = await response.json()
+        setMessages(data)
+      } else {
+        toast.error('Failed to load messages')
+      }
     } catch (error) {
       console.error('Failed to fetch messages:', error)
       toast.error('Failed to load messages')
     }
   }
 
-  const handleConversationSelect = (conversation: Conversation) => {
+  const handleConversationSelect = (conversation: any) => {
     setSelectedConversation(conversation)
     fetchMessages(conversation.id)
   }
@@ -127,24 +72,42 @@ export default function MessagesPage() {
     e.preventDefault()
     if (!newMessage.trim()) return
 
+    setSendingMessage(true)
     try {
-      const mockMessage: Message = {
-        id: Date.now().toString(),
-        content: newMessage,
-        fromUserId: session?.user?.id || '',
-        createdAt: new Date(),
-        fromUser: { name: session?.user?.name || null }
-      }
+      const response = await fetch('/api/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: newMessage,
+          listingId: selectedConversation?.id,
+        }),
+      })
 
-      setMessages([...messages, mockMessage])
-      setNewMessage('')
-      toast.success('Message sent')
+      if (response.ok) {
+        const newMessageData = await response.json()
+        setMessages([...messages, newMessageData])
+        setNewMessage('')
+        
+        // Update the conversation list
+        setConversations(conversations.map((conv: any) => 
+          conv.id === selectedConversation?.id 
+            ? { ...conv, lastMessage: newMessage, lastMessageTime: new Date() }
+            : conv
+        ))
+      } else {
+        toast.error('Failed to send message')
+      }
     } catch (error) {
+      console.error('Failed to send message:', error)
       toast.error('Failed to send message')
+    } finally {
+      setSendingMessage(false)
     }
   }
 
-  const filteredConversations = conversations.filter((conv) =>
+  const filteredConversations = conversations.filter((conv: any) =>
     conv.otherUser.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     conv.listing.title.toLowerCase().includes(searchQuery.toLowerCase())
   )
@@ -260,23 +223,23 @@ export default function MessagesPage() {
                 
                 <CardContent className="flex flex-col h-[400px] p-0">
                   <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                    {messages.map((message) => (
+                    {messages.map((message: any) => (
                       <div
                         key={message.id}
                         className={`flex ${
-                          message.fromUserId === session?.user?.id ? 'justify-end' : 'justify-start'
+                          message.fromUserId === session?.user.id ? 'justify-end' : 'justify-start'
                         }`}
                       >
                         <div
                           className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                            message.fromUserId === session?.user?.id
+                            message.fromUserId === session?.user.id
                               ? 'bg-blue-600 text-white'
                               : 'bg-gray-100 text-gray-900'
                           }`}
                         >
                           <p className="text-sm">{message.content}</p>
                           <p className={`text-xs mt-1 ${
-                            message.fromUserId === session?.user?.id ? 'text-blue-100' : 'text-gray-500'
+                            message.fromUserId === session?.user.id ? 'text-blue-100' : 'text-gray-500'
                           }`}>
                             {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
                           </p>
@@ -295,7 +258,7 @@ export default function MessagesPage() {
                         onChange={(e) => setNewMessage(e.target.value)}
                         className="flex-1"
                       />
-                      <Button type="submit" disabled={!newMessage.trim()}>
+                      <Button type="submit" disabled={!newMessage.trim() || sendingMessage}>
                         <Send className="w-4 h-4" />
                       </Button>
                     </div>

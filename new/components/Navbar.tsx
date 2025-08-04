@@ -103,6 +103,12 @@ export default function Navbar() {
                             Admin Panel
                           </Link>
                         </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin/messages">
+                            <MessageCircle className="mr-2 h-4 w-4" />
+                            Message Management
+                          </Link>
+                        </DropdownMenuItem>
                       </>
                     )}
                     <DropdownMenuSeparator />

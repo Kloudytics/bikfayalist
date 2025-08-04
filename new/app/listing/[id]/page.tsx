@@ -59,10 +59,26 @@ export default function ListingDetailPage() {
 
     setSendingMessage(true)
     try {
-      // Here you would implement the messaging system
-      toast.success('Message sent successfully!')
-      setMessage('')
+      const response = await fetch('/api/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: message,
+          listingId: listing.id,
+        }),
+      })
+
+      if (response.ok) {
+        toast.success('Message sent successfully!')
+        setMessage('')
+      } else {
+        const error = await response.json()
+        toast.error(error.error || 'Failed to send message')
+      }
     } catch (error) {
+      console.error('Failed to send message:', error)
       toast.error('Failed to send message')
     } finally {
       setSendingMessage(false)

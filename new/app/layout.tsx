@@ -2,6 +2,7 @@ import './globals.css'
 import type { Metadata } from 'next/types'
 import { Inter } from 'next/font/google'
 import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
 import { Toaster } from '@/components/ui/sonner'
 import Providers from './providers'
 
@@ -25,6 +26,7 @@ export default function RootLayout({
           <div className="min-h-screen bg-gray-50">
             <Navbar />
             <main>{children}</main>
+            <Footer />
             <Toaster />
           </div>
         </Providers>

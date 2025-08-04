@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Search, MessageCircle, Send, ArrowLeft } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
+import { toast } from 'sonner'
 
 export default function MessagesPage() {
   const { data: session, status } = useSession()
@@ -21,6 +22,7 @@ export default function MessagesPage() {
   const [newMessage, setNewMessage] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
+  const [sendingMessage, setSendingMessage] = useState(false)
 
   useEffect(() => {
     if (status === 'loading') return
@@ -31,28 +33,16 @@ export default function MessagesPage() {
 
   const fetchConversations = async () => {
     try {
-      // Mock conversations data - in real app, fetch from API
-      const mockConversations = [
-        {
-          id: '1',
-          otherUser: { id: '2', name: 'John Doe', image: null },
-          listing: { id: '1', title: 'iPhone 14 Pro Max', price: 899 },
-          lastMessage: 'Is this still available?',
-          lastMessageTime: new Date(Date.now() - 1000 * 60 * 30),
-          unreadCount: 2
-        },
-        {
-          id: '2',
-          otherUser: { id: '3', name: 'Jane Smith', image: null },
-          listing: { id: '2', title: 'MacBook Pro', price: 2800 },
-          lastMessage: 'Thanks for the quick response!',
-          lastMessageTime: new Date(Date.now() - 1000 * 60 * 60 * 2),
-          unreadCount: 0
-        }
-      ]
-      setConversations(mockConversations)
+      const response = await fetch('/api/messages')
+      if (response.ok) {
+        const data = await response.json()
+        setConversations(data)
+      } else {
+        toast.error('Failed to load conversations')
+      }
     } catch (error) {
       console.error('Failed to fetch conversations:', error)
+      toast.error('Failed to load conversations')
     } finally {
       setLoading(false)
     }
@@ -60,33 +50,16 @@ export default function MessagesPage() {
 
   const fetchMessages = async (conversationId: string) => {
     try {
-      // Mock messages data - in real app, fetch from API
-      const mockMessages = [
-        {
-          id: '1',
-          content: 'Hi! Is this iPhone still available?',
-          fromUserId: '2',
-          createdAt: new Date(Date.now() - 1000 * 60 * 60),
-          fromUser: { name: 'John Doe' }
-        },
-        {
-          id: '2',
-          content: 'Yes, it is! Are you interested in seeing it?',
-          fromUserId: session?.user.id,
-          createdAt: new Date(Date.now() - 1000 * 60 * 30),
-          fromUser: { name: session?.user.name }
-        },
-        {
-          id: '3',
-          content: 'Definitely! When would be a good time to meet?',
-          fromUserId: '2',
-          createdAt: new Date(Date.now() - 1000 * 60 * 15),
-          fromUser: { name: 'John Doe' }
-        }
-      ]
-      setMessages(mockMessages)
+      const response = await fetch(`/api/messages?listingId=${conversationId}`)
+      if (response.ok) {
+        const data = await response.json()
+        setMessages(data)
+      } else {
+        toast.error('Failed to load messages')
+      }
     } catch (error) {
       console.error('Failed to fetch messages:', error)
+      toast.error('Failed to load messages')
     }
   }
 
@@ -99,17 +72,39 @@ export default function MessagesPage() {
     e.preventDefault()
     if (!newMessage.trim()) return
 
-    // Mock sending message - in real app, send to API
-    const mockMessage = {
-      id: Date.now().toString(),
-      content: newMessage,
-      fromUserId: session?.user.id,
-      createdAt: new Date(),
-      fromUser: { name: session?.user.name }
-    }
+    setSendingMessage(true)
+    try {
+      const response = await fetch('/api/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: newMessage,
+          listingId: selectedConversation?.id,
+        }),
+      })
 
-    setMessages([...messages, mockMessage])
-    setNewMessage('')
+      if (response.ok) {
+        const newMessageData = await response.json()
+        setMessages([...messages, newMessageData])
+        setNewMessage('')
+        
+        // Update the conversation list
+        setConversations(conversations.map((conv: any) => 
+          conv.id === selectedConversation?.id 
+            ? { ...conv, lastMessage: newMessage, lastMessageTime: new Date() }
+            : conv
+        ))
+      } else {
+        toast.error('Failed to send message')
+      }
+    } catch (error) {
+      console.error('Failed to send message:', error)
+      toast.error('Failed to send message')
+    } finally {
+      setSendingMessage(false)
+    }
   }
 
   const filteredConversations = conversations.filter((conv: any) =>
