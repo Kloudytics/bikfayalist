@@ -34,12 +34,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null
         }
 
-        // For demo purposes, we'll check if password matches email
-        // In production, use proper password hashing with bcrypt
-        const isPasswordValid = credentials.password as string === "password123"
-
-        if (!isPasswordValid) {
-          return null
+        // Check if user has a hashed password
+        if (!user.password) {
+          // For existing demo users without passwords, use demo password
+          const isPasswordValid = credentials.password as string === "password123"
+          if (!isPasswordValid) {
+            return null
+          }
+        } else {
+          // Use bcrypt to verify hashed password
+          const isPasswordValid = await compare(credentials.password as string, user.password)
+          if (!isPasswordValid) {
+            return null
+          }
         }
 
         return {

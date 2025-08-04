@@ -9,6 +9,33 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 
+// Password validation function
+const validatePassword = (password: string) => {
+  const errors = []
+  
+  if (password.length < 8) {
+    errors.push('Password must be at least 8 characters long')
+  }
+  
+  if (!/[a-z]/.test(password)) {
+    errors.push('Password must contain at least one lowercase letter')
+  }
+  
+  if (!/[A-Z]/.test(password)) {
+    errors.push('Password must contain at least one uppercase letter')
+  }
+  
+  if (!/\d/.test(password)) {
+    errors.push('Password must contain at least one digit')
+  }
+  
+  if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+    errors.push('Password must contain at least one punctuation mark (!@#$%^&*(),.?":{}|<>)')
+  }
+  
+  return errors
+}
+
 export default function SignUpPage() {
   const [formData, setFormData] = useState({
     name: '',
@@ -17,10 +44,18 @@ export default function SignUpPage() {
     confirmPassword: '',
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [passwordErrors, setPasswordErrors] = useState<string[]>([])
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Validate password strength
+    const passwordValidationErrors = validatePassword(formData.password)
+    if (passwordValidationErrors.length > 0) {
+      passwordValidationErrors.forEach(error => toast.error(error))
+      return
+    }
     
     if (formData.password !== formData.confirmPassword) {
       toast.error('Passwords do not match')
@@ -59,10 +94,17 @@ export default function SignUpPage() {
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     })
+    
+    // Real-time password validation
+    if (name === 'password') {
+      const errors = validatePassword(value)
+      setPasswordErrors(errors)
+    }
   }
 
   return (
@@ -122,7 +164,22 @@ export default function SignUpPage() {
                   onChange={handleChange}
                   required
                   placeholder="Create a password"
+                  className={passwordErrors.length > 0 ? 'border-red-500' : ''}
                 />
+                {formData.password && passwordErrors.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {passwordErrors.map((error, index) => (
+                      <p key={index} className="text-sm text-red-600">
+                        • {error}
+                      </p>
+                    ))}
+                  </div>
+                )}
+                {formData.password && passwordErrors.length === 0 && (
+                  <p className="mt-2 text-sm text-green-600">
+                    ✓ Password meets all requirements
+                  </p>
+                )}
               </div>
 
               <div>
