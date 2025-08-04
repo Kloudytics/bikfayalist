@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
+import { usePathname, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Card, CardContent } from '@/components/ui/card'
@@ -32,11 +33,17 @@ interface ListingCardProps {
 
 export default function ListingCard({ listing }: ListingCardProps) {
   const { data: session } = useSession()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [isFavorited, setIsFavorited] = useState(false)
   const [favoriteId, setFavoriteId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const images = JSON.parse(listing.images || '[]')
   const mainImage = images[0] || 'https://images.pexels.com/photos/186461/pexels-photo-186461.jpeg'
+
+  // Create back URL to preserve current browse state
+  const backUrl = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`
+  const listingUrl = `/listing/${listing.id}?back=${encodeURIComponent(backUrl)}`
 
   useEffect(() => {
     if (session?.user) {
@@ -112,7 +119,7 @@ export default function ListingCard({ listing }: ListingCardProps) {
   }
 
   return (
-    <Link href={`/listing/${listing.id}`}>
+    <Link href={listingUrl}>
       <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 group">
         <div className="relative h-48 overflow-hidden">
           <Image

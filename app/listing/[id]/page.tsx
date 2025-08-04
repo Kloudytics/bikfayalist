@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -17,7 +17,11 @@ import { toast } from 'sonner'
 
 export default function ListingDetailPage() {
   const { id } = useParams()
+  const searchParams = useSearchParams()
   const { data: session } = useSession()
+  
+  // Get the back URL from search params, default to /browse
+  const backUrl = searchParams.get('back') || '/browse'
   const [listing, setListing] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [selectedImage, setSelectedImage] = useState(0)
@@ -149,7 +153,7 @@ export default function ListingDetailPage() {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Listing not found</h1>
           <Button asChild>
-            <Link href="/browse">Back to Browse</Link>
+            <Link href={backUrl}>Back to Browse</Link>
           </Button>
         </div>
       </div>
@@ -163,7 +167,7 @@ export default function ListingDetailPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-6">
         <Button variant="ghost" asChild>
-          <Link href="/browse">
+          <Link href={backUrl}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Listings
           </Link>

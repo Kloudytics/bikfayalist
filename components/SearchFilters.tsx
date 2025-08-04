@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Search, Filter } from 'lucide-react'
+import { Search, Filter, Loader2 } from 'lucide-react'
 
 interface SearchFiltersProps {
   onFiltersChange: (filters: any) => void
@@ -33,6 +33,8 @@ export default function SearchFilters({ onFiltersChange, categories, initialFilt
   const [maxPrice, setMaxPrice] = useState(initialFilters?.maxPrice || '')
   const [location, setLocation] = useState(initialFilters?.location || '')
   const [isInitialized, setIsInitialized] = useState(false)
+  const [isSearching, setIsSearching] = useState(false)
+  const debounceRef = useRef<NodeJS.Timeout | undefined>(undefined)
 
   const handleSearch = () => {
     onFiltersChange({
@@ -65,7 +67,7 @@ export default function SearchFilters({ onFiltersChange, categories, initialFilt
     setIsInitialized(true)
   }, [initialFilters])
 
-  // Only trigger filtering when user actually changes values (not during initialization)
+  // Debounced search effect with better handling
   useEffect(() => {
     // Skip filtering during initialization to prevent double API calls
     if (!isInitialized) return
@@ -80,19 +82,47 @@ export default function SearchFilters({ onFiltersChange, categories, initialFilt
       return
     }
     
-    const debounceTimer = setTimeout(() => {
+    // Clear any existing timeout
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current)
+    }
+    
+    // Set new timeout
+    debounceRef.current = setTimeout(() => {
+      setIsSearching(true)
       handleSearch()
-    }, 500)
+      // Reset searching state after a short delay
+      setTimeout(() => setIsSearching(false), 1000)
+    }, 300)
 
-    return () => clearTimeout(debounceTimer)
-  }, [search, category, minPrice, maxPrice, location, isInitialized, initialFilters])
+    // Cleanup function
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current)
+      }
+    }
+  }, [search, category, minPrice, maxPrice, location, isInitialized])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current)
+      }
+    }
+  }, [])
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center">
-          <Filter className="w-5 h-5 mr-2" />
-          Search & Filter
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center">
+            <Filter className="w-5 h-5 mr-2" />
+            Search & Filter
+          </div>
+          {isSearching && (
+            <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
