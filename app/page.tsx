@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import ListingCard from '@/components/ListingCard'
-import { Search, ArrowRight, TrendingUp, Shield, Users } from 'lucide-react'
+import SearchWithSuggestions from '@/components/SearchWithSuggestions'
+import { ArrowRight, TrendingUp, Shield, Users } from 'lucide-react'
 
 interface Category {
   id: string
@@ -34,7 +34,6 @@ interface Listing {
 export default function HomePage() {
   const [listings, setListings] = useState<Listing[]>([])
   const [categories, setCategories] = useState<Category[]>([])
-  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     fetchFeaturedListings()
@@ -63,12 +62,6 @@ export default function HomePage() {
     }
   }
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (searchQuery.trim()) {
-      window.location.href = `/browse?search=${encodeURIComponent(searchQuery)}`
-    }
-  }
 
   return (
     <div className="min-h-screen">
@@ -83,21 +76,7 @@ export default function HomePage() {
               The premier marketplace for your community. Find great deals or sell your items today.
             </p>
             
-            <form onSubmit={handleSearch} className="max-w-2xl mx-auto flex gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-4 top-4 h-5 w-5 text-gray-400" />
-                <Input
-                  type="text"
-                  placeholder="Search for anything..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-12 h-14 text-lg bg-white"
-                />
-              </div>
-              <Button type="submit" size="lg" className="h-14 px-8 bg-orange-500 hover:bg-orange-600">
-                Search
-              </Button>
-            </form>
+            <SearchWithSuggestions placeholder="Search for anything..." />
 
             <div className="mt-8 flex justify-center space-x-4">
               <Button asChild variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
