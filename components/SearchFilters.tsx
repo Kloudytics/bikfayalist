@@ -32,6 +32,7 @@ export default function SearchFilters({ onFiltersChange, categories, initialFilt
   const [minPrice, setMinPrice] = useState(initialFilters?.minPrice || '')
   const [maxPrice, setMaxPrice] = useState(initialFilters?.maxPrice || '')
   const [location, setLocation] = useState(initialFilters?.location || '')
+  const [isInitialized, setIsInitialized] = useState(false)
 
   const handleSearch = () => {
     onFiltersChange({
@@ -61,15 +62,20 @@ export default function SearchFilters({ onFiltersChange, categories, initialFilt
       setMaxPrice(initialFilters.maxPrice || '')
       setLocation(initialFilters.location || '')
     }
+    // Mark as initialized after setting initial values to prevent immediate filtering
+    setIsInitialized(true)
   }, [initialFilters])
 
   useEffect(() => {
+    // Only trigger search after component is initialized to prevent double filtering on load
+    if (!isInitialized) return
+    
     const debounceTimer = setTimeout(() => {
       handleSearch()
     }, 500)
 
     return () => clearTimeout(debounceTimer)
-  }, [search, category, minPrice, maxPrice, location])
+  }, [search, category, minPrice, maxPrice, location, isInitialized])
 
   return (
     <Card>
