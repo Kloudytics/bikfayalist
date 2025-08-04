@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Image from 'next/image'
@@ -24,8 +24,12 @@ export default function ListingDetailPage() {
   const [message, setMessage] = useState('')
   const [sendingMessage, setSendingMessage] = useState(false)
   const [hasRecordedView, setHasRecordedView] = useState(false)
+  const viewRecordedRef = useRef(false)
 
   useEffect(() => {
+    // Reset view tracking when ID changes
+    viewRecordedRef.current = false
+    setHasRecordedView(false)
     fetchListing()
   }, [id])
 
@@ -37,8 +41,12 @@ export default function ListingDetailPage() {
         setListing(data)
         
         // Record view only once after successfully fetching listing
-        if (!hasRecordedView) {
+        // Don't record view if user is the listing owner or already recorded
+        if (!viewRecordedRef.current && !hasRecordedView && session?.user?.id !== data.userId) {
+          viewRecordedRef.current = true
           recordView()
+        } else {
+          setHasRecordedView(true) // Mark as recorded even if skipped for owner
         }
       } else {
         toast.error('Listing not found')
