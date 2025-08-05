@@ -14,18 +14,22 @@ export async function PATCH(
 
   try {
     const body = await req.json()
-    const { status, reason } = body
+    const { status, rejectionReason } = body
 
     if (!['ACTIVE', 'ARCHIVED', 'FLAGGED'].includes(status)) {
       return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
     }
 
+    const updateData: any = { status }
+    
+    // Add rejection reason if status is ARCHIVED
+    if (status === 'ARCHIVED' && rejectionReason) {
+      updateData.rejectionReason = rejectionReason
+    }
+
     const listing = await prisma.listing.update({
       where: { id: params.id },
-      data: { 
-        status,
-        // We could add a rejection reason field in the future
-      },
+      data: updateData,
       include: {
         category: true,
         user: {

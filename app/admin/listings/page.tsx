@@ -271,6 +271,7 @@ export default function AdminListingsPage() {
                   <TableHead>Price</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Created</TableHead>
+                  <TableHead>Rejection Reason</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -317,6 +318,15 @@ export default function AdminListingsPage() {
                         <Calendar className="w-4 h-4 mr-1" />
                         {formatDistanceToNow(new Date(listing.createdAt), { addSuffix: true })}
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {listing.status === 'ARCHIVED' && listing.rejectionReason ? (
+                        <div className="text-sm text-red-600 max-w-[200px] truncate" title={listing.rejectionReason}>
+                          {listing.rejectionReason}
+                        </div>
+                      ) : (
+                        <span className="text-sm text-gray-400">-</span>
+                      )}
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>

@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
+import { Input } from '@/components/ui/input'
 import {
   Table,
   TableBody,
@@ -16,6 +17,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import { Textarea } from '@/components/ui/textarea'
 import { Users, FileText, Eye, AlertTriangle, Check, X } from 'lucide-react'
 
 export default function AdminPage() {
@@ -28,6 +37,12 @@ export default function AdminPage() {
   })
   const [users, setUsers] = useState([])
   const [listings, setListings] = useState([])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [rejectDialog, setRejectDialog] = useState<{open: boolean, listingId: string | null}>({
+    open: false,
+    listingId: null
+  })
+  const [rejectionReason, setRejectionReason] = useState('')
 
   useEffect(() => {
     if (status === 'loading') return
@@ -62,8 +77,11 @@ export default function AdminPage() {
 
   const fetchListings = async () => {
     try {
-      // For admin dashboard, prioritize PENDING listings for approval
-      const response = await fetch('/api/listings?status=PENDING&limit=10')
+      // For admin dashboard, show ALL PENDING listings for approval
+      const params = new URLSearchParams({ status: 'PENDING', limit: '100' })
+      if (searchQuery) params.append('search', searchQuery)
+      
+      const response = await fetch(`/api/listings?${params.toString()}`)
       const data = await response.json()
       setListings(data.listings || [])
     } catch (error) {
@@ -71,14 +89,27 @@ export default function AdminPage() {
     }
   }
 
-  const handleListingAction = async (listingId: string, action: 'ACTIVE' | 'ARCHIVED') => {
+  // Debounce search
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchListings()
+    }, 300)
+    return () => clearTimeout(timeoutId)
+  }, [searchQuery])
+
+  const handleListingAction = async (listingId: string, action: 'ACTIVE' | 'ARCHIVED', reason?: string) => {
     try {
+      const body: any = { status: action }
+      if (action === 'ARCHIVED' && reason) {
+        body.rejectionReason = reason
+      }
+
       const response = await fetch(`/api/admin/listings/${listingId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ status: action })
+        body: JSON.stringify(body)
       })
       
       if (response.ok) {
@@ -93,6 +124,19 @@ export default function AdminPage() {
     } catch (error) {
       console.error('Failed to update listing:', error)
       toast.error('Failed to update listing')
+    }
+  }
+
+  const openRejectDialog = (listingId: string) => {
+    setRejectDialog({ open: true, listingId })
+    setRejectionReason('')
+  }
+
+  const handleRejectWithReason = () => {
+    if (rejectDialog.listingId) {
+      handleListingAction(rejectDialog.listingId, 'ARCHIVED', rejectionReason)
+      setRejectDialog({ open: false, listingId: null })
+      setRejectionReason('')
     }
   }
 
@@ -207,7 +251,21 @@ export default function AdminPage() {
         {/* Pending Listings */}
         <Card>
           <CardHeader>
-            <CardTitle>Pending Listings (Require Approval)</CardTitle>
+            <CardTitle className="flex items-center justify-between">
+              <span>Pending Listings (Require Approval)</span>
+              <Badge variant="secondary">{listings.length} pending</Badge>
+            </CardTitle>
+            <div className="flex gap-4 items-center mt-4">
+              <Input
+                placeholder="Search listings by title or user..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="max-w-md"
+              />
+              <Button asChild variant="outline">
+                <Link href="/admin/listings?status=ARCHIVED">View Rejected</Link>
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <Table>
@@ -246,7 +304,7 @@ export default function AdminPage() {
                         <Button 
                           size="sm" 
                           variant="outline"
-                          onClick={() => handleListingAction(listing.id, 'ARCHIVED')}
+                          onClick={() => openRejectDialog(listing.id)}
                           className="border-red-600 text-red-600 hover:bg-red-50"
                         >
                           <X className="w-4 h-4 mr-1" />
@@ -266,6 +324,38 @@ export default function AdminPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Rejection Reason Dialog */}
+      <Dialog open={rejectDialog.open} onOpenChange={(open) => setRejectDialog({ open, listingId: null })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reject Listing</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">
+              Please provide a reason for rejecting this listing. This will help the user understand why their listing was not approved.
+            </p>
+            <Textarea
+              placeholder="e.g., Images are unclear, inappropriate content, duplicate listing, etc."
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              rows={4}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejectDialog({ open: false, listingId: null })}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleRejectWithReason}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={!rejectionReason.trim()}
+            >
+              Reject Listing
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
