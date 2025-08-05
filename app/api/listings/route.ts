@@ -20,16 +20,27 @@ export async function GET(req: NextRequest) {
   const maxPrice = searchParams.get('maxPrice')
   const location = searchParams.get('location')
   const userId = searchParams.get('userId')
+  const status = searchParams.get('status')
   const page = parseInt(searchParams.get('page') || '1')
   const limit = parseInt(searchParams.get('limit') || '12')
 
   try {
     const where: any = {}
 
+    // Check if this is an admin request
+    const session = await auth()
+    const isAdmin = session?.user?.role === 'ADMIN'
+
     // If userId is provided, show all listings for that user (any status)
+    // If status is specified (admin only), filter by that status
     // Otherwise, only show ACTIVE listings for public browsing
     if (userId) {
       where.userId = userId
+    } else if (status && isAdmin) {
+      where.status = status
+    } else if (isAdmin) {
+      // Admin sees all listings if no specific status filter
+      // No status filter needed
     } else {
       where.status = 'ACTIVE'
     }

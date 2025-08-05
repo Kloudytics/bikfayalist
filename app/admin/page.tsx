@@ -78,6 +78,15 @@ export default function AdminPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-4">Admin Dashboard</h1>
         <p className="text-gray-600">Manage users, listings, and platform settings</p>
+        
+        <div className="flex gap-4 mt-4">
+          <Button asChild>
+            <Link href="/admin/listings">Manage Listings</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/admin/messages">Manage Messages</Link>
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}

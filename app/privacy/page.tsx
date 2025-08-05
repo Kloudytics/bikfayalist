@@ -107,10 +107,72 @@ export default function PrivacyPolicyPage() {
             </CardContent>
           </Card>
 
+          {/* Message Monitoring and Content Moderation */}
+          <Card className="border-yellow-200 bg-yellow-50">
+            <CardHeader>
+              <CardTitle className="text-yellow-800">4. Message Monitoring and Content Moderation</CardTitle>
+            </CardHeader>
+            <CardContent className="prose prose-gray max-w-none">
+              <div className="bg-yellow-100 p-4 rounded-lg border border-yellow-300 mb-4">
+                <h4 className="font-semibold mb-2 text-yellow-800">Important Notice</h4>
+                <p className="text-yellow-800">
+                  To ensure user safety and maintain platform quality, BikfayaList reserves the right to monitor and review user communications and content.
+                </p>
+              </div>
+
+              <h4 className="font-semibold mb-2">Message Monitoring</h4>
+              <p>BikfayaList may monitor user conversations in the following circumstances:</p>
+              <ul className="list-disc ml-6 space-y-1">
+                <li><strong>Safety and Security:</strong> When necessary to protect user safety or platform security</li>
+                <li><strong>Abuse Prevention:</strong> To detect and prevent fraud, scams, harassment, or other harmful activities</li>
+                <li><strong>Flagged Content:</strong> When messages are reported by users or flagged by our automated systems</li>
+                <li><strong>Legal Compliance:</strong> When required by law enforcement or legal processes</li>
+                <li><strong>Terms Enforcement:</strong> To investigate potential violations of our Terms of Service</li>
+              </ul>
+
+              <h4 className="font-semibold mb-2 mt-4">Content Moderation</h4>
+              <p>All platform content is subject to our community guidelines and moderation:</p>
+              <ul className="list-disc ml-6 space-y-1">
+                <li><strong>Listing Review:</strong> All new listings undergo review before becoming publicly visible</li>
+                <li><strong>Message Review:</strong> Flagged or reported messages are reviewed by our moderation team</li>
+                <li><strong>Automated Detection:</strong> We use automated systems to detect potentially harmful content</li>
+                <li><strong>User Reports:</strong> Users can report inappropriate content or behavior</li>
+              </ul>
+
+              <h4 className="font-semibold mb-2 mt-4">Actions We May Take</h4>
+              <p>Based on our review, we may take various actions:</p>
+              <ul className="list-disc ml-6 space-y-1">
+                <li>Remove or hide inappropriate content</li>
+                <li>Flag messages or listings for further review</li>
+                <li>Issue warnings to users</li>
+                <li>Temporarily or permanently suspend accounts</li>
+                <li>Report illegal activities to law enforcement</li>
+                <li>Preserve evidence for legal proceedings</li>
+              </ul>
+
+              <h4 className="font-semibold mb-2 mt-4">Privacy Protection</h4>
+              <p>While we reserve the right to monitor communications when necessary, we are committed to:</p>
+              <ul className="list-disc ml-6 space-y-1">
+                <li>Only accessing conversations when there is a legitimate safety, security, or legal need</li>
+                <li>Using the minimum necessary access to address the specific concern</li>
+                <li>Protecting user privacy in our moderation processes</li>
+                <li>Training our moderation team on privacy best practices</li>
+                <li>Maintaining confidentiality of reviewed communications</li>
+              </ul>
+
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-300 mt-4">
+                <h4 className="font-semibold mb-2 text-blue-800">Your Responsibility</h4>
+                <p className="text-blue-800">
+                  By using BikfayaList, you agree to use our messaging system responsibly and acknowledge that your communications may be subject to monitoring as described above. Always follow our community guidelines and treat other users with respect.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Information Sharing */}
           <Card>
             <CardHeader>
-              <CardTitle>4. How We Share Your Information</CardTitle>
+              <CardTitle>5. How We Share Your Information</CardTitle>
             </CardHeader>
             <CardContent className="prose prose-gray max-w-none">
               <h4 className="font-semibold mb-2">Public Information</h4>
@@ -152,7 +214,7 @@ export default function PrivacyPolicyPage() {
           {/* Data Security */}
           <Card>
             <CardHeader>
-              <CardTitle>5. Data Security</CardTitle>
+              <CardTitle>6. Data Security</CardTitle>
             </CardHeader>
             <CardContent className="prose prose-gray max-w-none">
               <h4 className="font-semibold mb-2">Security Measures</h4>
@@ -185,7 +247,7 @@ export default function PrivacyPolicyPage() {
           {/* Your Rights */}
           <Card>
             <CardHeader>
-              <CardTitle>6. Your Privacy Rights</CardTitle>
+              <CardTitle>7. Your Privacy Rights</CardTitle>
             </CardHeader>
             <CardContent className="prose prose-gray max-w-none">
               <h4 className="font-semibold mb-2">Access and Control</h4>
@@ -224,7 +286,7 @@ export default function PrivacyPolicyPage() {
           {/* Cookies and Tracking */}
           <Card>
             <CardHeader>
-              <CardTitle>7. Cookies and Tracking Technologies</CardTitle>
+              <CardTitle>8. Cookies and Tracking Technologies</CardTitle>
             </CardHeader>
             <CardContent className="prose prose-gray max-w-none">
               <h4 className="font-semibold mb-2">Types of Cookies</h4>
@@ -255,7 +317,7 @@ export default function PrivacyPolicyPage() {
           {/* Data Retention */}
           <Card>
             <CardHeader>
-              <CardTitle>8. Data Retention</CardTitle>
+              <CardTitle>9. Data Retention</CardTitle>
             </CardHeader>
             <CardContent className="prose prose-gray max-w-none">
               <h4 className="font-semibold mb-2">Retention Periods</h4>
@@ -278,7 +340,7 @@ export default function PrivacyPolicyPage() {
           {/* International Transfers */}
           <Card>
             <CardHeader>
-              <CardTitle>9. International Data Transfers</CardTitle>
+              <CardTitle>10. International Data Transfers</CardTitle>
             </CardHeader>
             <CardContent className="prose prose-gray max-w-none">
               <p>
@@ -296,7 +358,7 @@ export default function PrivacyPolicyPage() {
           {/* Children's Privacy */}
           <Card>
             <CardHeader>
-              <CardTitle>10. Children's Privacy</CardTitle>
+              <CardTitle>11. Children's Privacy</CardTitle>
             </CardHeader>
             <CardContent className="prose prose-gray max-w-none">
               <p>
@@ -311,7 +373,7 @@ export default function PrivacyPolicyPage() {
           {/* Changes to Policy */}
           <Card>
             <CardHeader>
-              <CardTitle>11. Changes to This Privacy Policy</CardTitle>
+              <CardTitle>12. Changes to This Privacy Policy</CardTitle>
             </CardHeader>
             <CardContent className="prose prose-gray max-w-none">
               <p>
@@ -332,7 +394,7 @@ export default function PrivacyPolicyPage() {
           {/* Contact Information */}
           <Card>
             <CardHeader>
-              <CardTitle>12. Contact Information</CardTitle>
+              <CardTitle>13. Contact Information</CardTitle>
             </CardHeader>
             <CardContent className="prose prose-gray max-w-none">
               <h4 className="font-semibold mb-2">Privacy Questions</h4>

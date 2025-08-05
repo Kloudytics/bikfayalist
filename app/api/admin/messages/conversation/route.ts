@@ -18,11 +18,24 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Missing listingId or fromUserId' }, { status: 400 })
     }
 
-    // Get all messages for this conversation
+    // Get the listing owner to find bidirectional conversation
+    const listing = await prisma.listing.findUnique({
+      where: { id: listingId },
+      select: { userId: true }
+    })
+
+    if (!listing) {
+      return NextResponse.json({ error: 'Listing not found' }, { status: 404 })
+    }
+
+    // Get all messages for this conversation (bidirectional)
     const messages = await prisma.message.findMany({
       where: {
         listingId,
-        fromUserId,
+        OR: [
+          { fromUserId }, // Messages from the inquirer
+          { fromUserId: listing.userId }, // Messages from the listing owner
+        ]
       },
       include: {
         fromUser: {

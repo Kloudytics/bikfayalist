@@ -76,7 +76,7 @@ model Listing {
   price       Float
   images      String        @default("[]")
   location    String
-  status      ListingStatus @default(ACTIVE)
+  status      ListingStatus @default(PENDING)
   featured    Boolean       @default(false)
   views       Int           @default(0)
   categoryId  String

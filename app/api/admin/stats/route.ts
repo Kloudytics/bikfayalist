@@ -10,11 +10,12 @@ export async function GET() {
   }
 
   try {
-    const [totalUsers, totalListings, activeListings, pendingListings] = await Promise.all([
+    const [totalUsers, totalListings, activeListings, pendingListings, flaggedListings] = await Promise.all([
       prisma.user.count(),
       prisma.listing.count(),
       prisma.listing.count({ where: { status: 'ACTIVE' } }),
       prisma.listing.count({ where: { status: 'PENDING' } }),
+      prisma.listing.count({ where: { status: 'FLAGGED' } }),
     ])
 
     return NextResponse.json({
@@ -22,6 +23,7 @@ export async function GET() {
       totalListings,
       activeListings,
       pendingListings,
+      flaggedListings,
     })
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch stats' }, { status: 500 })
