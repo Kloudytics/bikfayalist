@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Account {
@@ -34,24 +34,24 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?   
-  role          Role      @default(USER)
-  bio           String?
-  phone         String?
-  location      String?
-  accounts      Account[]
-  sessions      Session[]
-  listings      Listing[]
-  messages      Message[]
-  favorites     Favorite[]
+  id               String            @id @default(cuid())
+  name             String?
+  email            String            @unique
+  emailVerified    DateTime?
+  image            String?
+  password         String?
+  role             Role              @default(USER)
+  bio              String?
+  phone            String?
+  location         String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  accounts         Account[]
+  favorites        Favorite[]
+  listings         Listing[]
+  messages         Message[]
+  sessions         Session[]
   termsAcceptances TermsAcceptance[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
 }
 
 model VerificationToken {
@@ -70,45 +70,45 @@ model Category {
 }
 
 model Listing {
-  id          String        @id @default(cuid())
-  title       String
-  description String
-  price       Float
-  images      String        @default("[]")
-  location    String
-  status        ListingStatus @default(PENDING)
-  rejectionReason String?     // Reason for rejection if status is ARCHIVED
-  featured      Boolean       @default(false)
-  views         Int           @default(0)
-  categoryId  String
-  userId      String
-  category    Category      @relation(fields: [categoryId], references: [id])
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  messages    Message[]
-  favorites   Favorite[]
-  productViews ProductView[]
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id              String        @id @default(cuid())
+  title           String
+  description     String
+  price           Float
+  images          String        @default("[]")
+  location        String
+  status          ListingStatus @default(PENDING)
+  rejectionReason String?
+  featured        Boolean       @default(false)
+  views           Int           @default(0)
+  categoryId      String
+  userId          String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  favorites       Favorite[]
+  category        Category      @relation(fields: [categoryId], references: [id])
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages        Message[]
+  productViews    ProductView[]
 }
 
 model Message {
-  id        String   @id @default(cuid())
-  content   String
+  id         String   @id @default(cuid())
+  content    String
   fromUserId String
-  listingId String
-  flagged   Boolean  @default(false)
-  fromUser  User     @relation(fields: [fromUserId], references: [id])
-  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  listingId  String
+  flagged    Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  fromUser   User     @relation(fields: [fromUserId], references: [id])
+  listing    Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
 }
 
 model Favorite {
   id        String   @id @default(cuid())
   userId    String
   listingId String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, listingId])
 }
@@ -118,27 +118,25 @@ model ProductView {
   listingId String
   ipAddress String
   userAgent String?
-  userId    String?  // Optional: track authenticated users too
+  userId    String?
   viewedAt  DateTime @default(now())
-  
   listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  
+
   @@unique([listingId, ipAddress])
   @@index([listingId])
   @@index([ipAddress])
 }
 
 model TermsAcceptance {
-  id              String   @id @default(cuid())
-  userId          String
-  termsVersion    String   // Version identifier (e.g., "1.0", "2.1")
-  privacyVersion  String   // Privacy policy version
-  acceptedAt      DateTime @default(now())
-  ipAddress       String?  // IP address when accepted
-  userAgent       String?  // Browser/device info
-  
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  id             String   @id @default(cuid())
+  userId         String
+  termsVersion   String
+  privacyVersion String
+  acceptedAt     DateTime @default(now())
+  ipAddress      String?
+  userAgent      String?
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([userId, termsVersion, privacyVersion])
   @@index([userId])
   @@index([termsVersion])
