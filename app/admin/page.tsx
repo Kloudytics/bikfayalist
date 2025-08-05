@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 import {
   Table,
   TableBody,
@@ -15,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Users, FileText, Eye, AlertTriangle } from 'lucide-react'
+import { Users, FileText, Eye, AlertTriangle, Check, X } from 'lucide-react'
 
 export default function AdminPage() {
   const { data: session, status } = useSession()
@@ -61,11 +62,37 @@ export default function AdminPage() {
 
   const fetchListings = async () => {
     try {
-      const response = await fetch('/api/listings?limit=10')
+      // For admin dashboard, prioritize PENDING listings for approval
+      const response = await fetch('/api/listings?status=PENDING&limit=10')
       const data = await response.json()
       setListings(data.listings || [])
     } catch (error) {
       console.error('Failed to fetch listings:', error)
+    }
+  }
+
+  const handleListingAction = async (listingId: string, action: 'ACTIVE' | 'ARCHIVED') => {
+    try {
+      const response = await fetch(`/api/admin/listings/${listingId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: action })
+      })
+      
+      if (response.ok) {
+        // Remove the listing from the pending list
+        setListings(listings.filter((listing: any) => listing.id !== listingId))
+        toast.success(`Listing ${action === 'ACTIVE' ? 'approved' : 'rejected'} successfully`)
+        // Refresh stats
+        fetchStats()
+      } else {
+        toast.error('Failed to update listing')
+      }
+    } catch (error) {
+      console.error('Failed to update listing:', error)
+      toast.error('Failed to update listing')
     }
   }
 
@@ -177,10 +204,10 @@ export default function AdminPage() {
           </CardContent>
         </Card>
 
-        {/* Recent Listings */}
+        {/* Pending Listings */}
         <Card>
           <CardHeader>
-            <CardTitle>Recent Listings</CardTitle>
+            <CardTitle>Pending Listings (Require Approval)</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
@@ -206,11 +233,31 @@ export default function AdminPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Button size="sm" variant="outline" asChild>
-                        <Link href={`/listing/${listing.id}`}>
-                          View Listing
-                        </Link>
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button 
+                          size="sm" 
+                          variant="default"
+                          onClick={() => handleListingAction(listing.id, 'ACTIVE')}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          <Check className="w-4 h-4 mr-1" />
+                          Approve
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleListingAction(listing.id, 'ARCHIVED')}
+                          className="border-red-600 text-red-600 hover:bg-red-50"
+                        >
+                          <X className="w-4 h-4 mr-1" />
+                          Reject
+                        </Button>
+                        <Button size="sm" variant="ghost" asChild>
+                          <Link href={`/listing/${listing.id}`}>
+                            <Eye className="w-4 h-4" />
+                          </Link>
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

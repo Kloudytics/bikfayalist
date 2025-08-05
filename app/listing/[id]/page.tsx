@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
-import { MapPin, Eye, Calendar, Phone, Mail, MessageCircle, ArrowLeft } from 'lucide-react'
+import { MapPin, Eye, Calendar, Phone, Mail, MessageCircle, ArrowLeft, Check, X, Flag } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { toast } from 'sonner'
 
@@ -29,6 +29,8 @@ export default function ListingDetailPage() {
   const [sendingMessage, setSendingMessage] = useState(false)
   const [hasRecordedView, setHasRecordedView] = useState(false)
   const viewRecordedRef = useRef(false)
+  
+  const isAdmin = session?.user?.role === 'ADMIN'
 
   useEffect(() => {
     // Reset view tracking when ID changes
@@ -125,6 +127,30 @@ export default function ListingDetailPage() {
     }
   }
 
+  const handleAdminAction = async (action: 'ACTIVE' | 'ARCHIVED' | 'FLAGGED') => {
+    try {
+      const response = await fetch(`/api/admin/listings/${listing.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: action })
+      })
+      
+      if (response.ok) {
+        const updatedListing = await response.json()
+        setListing(updatedListing)
+        const actionText = action === 'ACTIVE' ? 'approved' : action === 'ARCHIVED' ? 'rejected' : 'flagged'
+        toast.success(`Listing ${actionText} successfully`)
+      } else {
+        toast.error('Failed to update listing')
+      }
+    } catch (error) {
+      console.error('Failed to update listing:', error)
+      toast.error('Failed to update listing')
+    }
+  }
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -166,12 +192,59 @@ export default function ListingDetailPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-6">
-        <Button variant="ghost" asChild>
-          <Link href={backUrl}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Listings
-          </Link>
-        </Button>
+        <div className="flex items-center justify-between">
+          <Button variant="ghost" asChild>
+            <Link href={backUrl}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Listings
+            </Link>
+          </Button>
+          
+          {/* Admin Controls */}
+          {isAdmin && (
+            <div className="flex gap-2">
+              {listing.status === 'PENDING' && (
+                <>
+                  <Button 
+                    onClick={() => handleAdminAction('ACTIVE')}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <Check className="w-4 h-4 mr-2" />
+                    Approve Listing
+                  </Button>
+                  <Button 
+                    onClick={() => handleAdminAction('ARCHIVED')}
+                    variant="outline"
+                    className="border-red-600 text-red-600 hover:bg-red-50"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Reject Listing
+                  </Button>
+                </>
+              )}
+              {listing.status === 'ACTIVE' && (
+                <Button 
+                  onClick={() => handleAdminAction('FLAGGED')}
+                  variant="outline"
+                  className="border-orange-600 text-orange-600 hover:bg-orange-50"
+                >
+                  <Flag className="w-4 h-4 mr-2" />
+                  Flag as Inappropriate
+                </Button>
+              )}
+              <Badge 
+                variant={
+                  listing.status === 'ACTIVE' ? 'default' : 
+                  listing.status === 'PENDING' ? 'secondary' : 
+                  listing.status === 'FLAGGED' ? 'destructive' : 'outline'
+                }
+                className="ml-2"
+              >
+                {listing.status}
+              </Badge>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
