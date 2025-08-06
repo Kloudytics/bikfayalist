@@ -52,8 +52,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         // Check if user has a hashed password
         if (!user.password) {
-          // For existing demo users without passwords, use demo password
-          const isPasswordValid = credentials.password as string === "B@troun007"
+          // For existing demo users without passwords, use environment variable
+          const demoPassword = process.env.DEMO_PASSWORD || "disable_demo_login"
+          const isPasswordValid = credentials.password as string === demoPassword
           if (!isPasswordValid) {
             return null
           }
