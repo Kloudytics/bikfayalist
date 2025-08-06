@@ -16,30 +16,44 @@ export const metadata: Metadata = {
   creator: 'BikfayaList',
   publisher: 'BikfayaList',
   robots: 'index, follow',
+  metadataBase: new URL(process.env.NEXTAUTH_URL || 'https://bikfayalist.com'),
+  alternates: {
+    canonical: '/',
+  },
+  icons: {
+    icon: [
+      {
+        url: '/favicon.png',
+        sizes: '512x512',
+        type: 'image/png',
+      },
+    ],
+    shortcut: '/favicon.png',
+    apple: '/favicon.png',
+  },
+  manifest: '/manifest.json',
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://bikfayalist.com',
+    url: '/',
     siteName: 'BikfayaList',
     title: 'BikfayaList - Buy, Sell, Trade in Bikfaya & Surrounding Areas',
     description: 'The premier classified listing platform for Bikfaya, Lebanon. Connect with your local community and find great deals.',
     images: [
       {
-        url: '/og-image.jpg',
-        width: 1200,
-        height: 630,
+        url: '/favicon.png',
+        width: 512,
+        height: 512,
         alt: 'BikfayaList - Local Classified Listings for Bikfaya, Lebanon',
       },
     ],
   },
   twitter: {
-    card: 'summary_large_image',
+    card: 'summary',
     title: 'BikfayaList - Buy, Sell, Trade in Bikfaya & Surrounding Areas',
     description: 'The premier classified listing platform for Bikfaya, Lebanon. Connect with your local community.',
-    images: ['/og-image.jpg'],
+    images: ['/favicon.png'],
   },
-  viewport: 'width=device-width, initial-scale=1',
-  themeColor: '#3b82f6',
 }
 
 export default function RootLayout({

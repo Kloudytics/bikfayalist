@@ -1,0 +1,17 @@
+{
+  "name": "BikfayaList - Local Classified Listings",
+  "short_name": "BikfayaList", 
+  "description": "Buy, sell, and trade items locally in Bikfaya and surrounding areas",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#3b82f6",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

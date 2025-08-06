@@ -35,6 +35,16 @@
   status = 301
   force = false
 
+# Domain redirects for future bikfayalist.com migration
+[[redirects]]
+  from = "https://bikfayalist.netlify.app/*"
+  to = "https://bikfayalist.com/:splat"
+  status = 301
+  force = false
+  condition = "headers"
+  [redirects.conditions]
+    Host = ["bikfayalist.netlify.app"]
+
 # Environment-specific redirects
 [context.production]
   environment = { NODE_ENV = "production" }

@@ -20,11 +20,11 @@ DATABASE_URL="postgresql://neondb_owner:npg_SFlj8pA7mvOw@ep-nameless-hat-a2mxdfe
 
 # NextAuth (Required) - Generate new secure values
 NEXTAUTH_SECRET="generate_with_openssl_rand_base64_32"
-NEXTAUTH_URL="https://your-domain.netlify.app"
+NEXTAUTH_URL="https://bikfayalist.netlify.app"  # Update when custom domain is ready
 
 # Security (Required)
 NODE_ENV="production"
-ALLOWED_ORIGINS="https://your-domain.netlify.app"
+ALLOWED_ORIGINS="https://bikfayalist.netlify.app,https://bikfayalist.com,https://www.bikfayalist.com"
 ENABLE_SECURITY_HEADERS="true"
 
 # Demo Access (Optional - for beta testing)
@@ -49,9 +49,10 @@ npm run db:seed
 ```
 
 ### 3. Domain Configuration
-- **Primary Domain**: Set your custom domain in Netlify
-- **CORS**: Update `ALLOWED_ORIGINS` with your final domain
-- **NextAuth URL**: Update `NEXTAUTH_URL` with production domain
+- **Netlify Domain**: Will be assigned automatically (e.g., `bikfayalist.netlify.app`)
+- **Custom Domain**: Configure `bikfayalist.com` when ready
+- **CORS**: Pre-configured for both Netlify and custom domain
+- **Auto-Redirect**: Netlify → bikfayalist.com migration ready
 
 ## 🔒 Security Hardening Completed
 

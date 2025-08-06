@@ -1,0 +1,21 @@
+User-agent: *
+Allow: /
+
+# Disallow admin and private areas
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /api
+
+# Allow public pages
+Allow: /
+Allow: /browse
+Allow: /listing
+Allow: /categories
+Allow: /help
+Allow: /terms
+Allow: /privacy
+Allow: /auth/signin
+Allow: /auth/signup
+
+# Sitemap location (future)
+Sitemap: https://bikfayalist.com/sitemap.xml
