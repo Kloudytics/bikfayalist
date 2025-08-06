@@ -2,14 +2,22 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { z } from 'zod'
+import { createRateLimit, validateInput, getSecurityHeaders } from '@/lib/security'
 
 const listingSchema = z.object({
   title: z.string().min(1).max(100),
   description: z.string().min(10).max(2000),
-  price: z.number().positive(),
-  location: z.string().min(1),
-  categoryId: z.string(),
-  images: z.array(z.string()).optional(),
+  price: z.number().positive().max(999999999), // Max $999M
+  location: z.string().min(1).max(100),
+  categoryId: z.string().cuid(),
+  images: z.array(z.string().url()).optional(),
+})
+
+// Rate limiting: 10 listings per hour per user
+const createListingRateLimit = createRateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  maxRequests: 10,
+  message: 'Too many listings created. Please try again in an hour.'
 })
 
 export async function GET(req: NextRequest) {
@@ -103,15 +111,33 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  // Apply rate limiting for listing creation
+  const rateLimitResponse = await createListingRateLimit(req)
+  if (rateLimitResponse) {
+    return rateLimitResponse
+  }
+
   const session = await auth()
   
   if (!session?.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json(
+      { error: 'Unauthorized' }, 
+      { status: 401, headers: getSecurityHeaders() }
+    )
   }
 
   try {
     const body = await req.json()
-    const validatedData = listingSchema.parse(body)
+    
+    // Sanitize input data
+    const sanitizedData = {
+      ...body,
+      title: validateInput(body.title, 100),
+      description: validateInput(body.description, 2000),
+      location: validateInput(body.location, 100)
+    }
+    
+    const validatedData = listingSchema.parse(sanitizedData)
 
     const listing = await prisma.listing.create({
       data: {
@@ -131,7 +157,10 @@ export async function POST(req: NextRequest) {
       }
     })
 
-    return NextResponse.json(listing, { status: 201 })
+    return NextResponse.json(listing, { 
+      status: 201,
+      headers: getSecurityHeaders()
+    })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.errors }, { status: 400 })

@@ -5,8 +5,6 @@ import { useSession } from 'next-auth/react'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
 import {
   Table,
   TableBody,
@@ -15,26 +13,19 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { 
-  Search, 
   Plus, 
-  MoreHorizontal, 
-  Edit, 
   Eye, 
-  Trash2, 
-  Archive,
   TrendingUp,
   Calendar
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { toast } from 'sonner'
+import { ListingStatusBadge } from '@/components/dashboard/ListingStatusBadge'
+import { ListingActionsDropdown } from '@/components/dashboard/ListingActionsDropdown'
+import { ListingFilters } from '@/components/dashboard/ListingFilters'
 
 interface Listing {
   id: string
@@ -104,8 +95,13 @@ export default function UserListingsPage() {
     setFilteredListings(filtered)
   }
 
-  const handleDeleteListing = async (listingId: string) => {
-    if (!confirm('Are you sure you want to delete this listing?')) return
+  const handleDeleteListing = async (listingId: string, status: string) => {
+    const actionText = status === 'ACTIVE' ? 'archive' : 'delete'
+    const confirmText = status === 'ACTIVE' 
+      ? 'Are you sure you want to archive this listing? It will be hidden from public view but preserved in your account.'
+      : 'Are you sure you want to permanently delete this listing? This action cannot be undone.'
+    
+    if (!confirm(confirmText)) return
 
     try {
       const response = await fetch(`/api/listings/${listingId}`, {
@@ -113,13 +109,25 @@ export default function UserListingsPage() {
       })
 
       if (response.ok) {
-        setListings(listings.filter((listing) => listing.id !== listingId))
-        toast.success('Listing deleted successfully')
+        const data = await response.json()
+        
+        if (data.action === 'archived') {
+          // Update the listing status to ARCHIVED in the local state
+          setListings(listings.map((listing) => 
+            listing.id === listingId ? { ...listing, status: 'ARCHIVED' } : listing
+          ))
+          toast.success('Listing archived successfully')
+        } else if (data.action === 'deleted') {
+          // Remove the listing from local state
+          setListings(listings.filter((listing) => listing.id !== listingId))
+          toast.success('Listing deleted successfully')
+        }
       } else {
-        toast.error('Failed to delete listing')
+        const errorData = await response.json()
+        toast.error(errorData.error || `Failed to ${actionText} listing`)
       }
     } catch (error) {
-      toast.error('Failed to delete listing')
+      toast.error(`Failed to ${actionText} listing`)
     }
   }
 
@@ -147,18 +155,32 @@ export default function UserListingsPage() {
     }
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'ACTIVE':
-        return 'default'
-      case 'PENDING':
-        return 'secondary'
-      case 'ARCHIVED':
-        return 'outline'
-      default:
-        return 'secondary'
+  const handleReactivateListing = async (listingId: string) => {
+    if (!confirm('Are you sure you want to reactivate this listing? It will be set to PENDING status for admin approval.')) return
+
+    try {
+      const response = await fetch(`/api/listings/${listingId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: 'PENDING' }),
+      })
+
+      if (response.ok) {
+        const updatedListing = await response.json()
+        setListings(listings.map((listing) => 
+          listing.id === listingId ? updatedListing : listing
+        ))
+        toast.success('Listing reactivated and sent for admin approval')
+      } else {
+        toast.error('Failed to reactivate listing')
+      }
+    } catch (error) {
+      toast.error('Failed to reactivate listing')
     }
   }
+
 
   if (status === 'loading') {
     return <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">Loading...</div>
@@ -181,31 +203,12 @@ export default function UserListingsPage() {
         </div>
 
         {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search your listings..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          
-          <div className="flex gap-2">
-            {['all', 'active', 'pending', 'archived'].map((status) => (
-              <Button
-                key={status}
-                variant={statusFilter === status ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setStatusFilter(status)}
-                className="capitalize"
-              >
-                {status}
-              </Button>
-            ))}
-          </div>
-        </div>
+        <ListingFilters
+          searchQuery={searchQuery}
+          statusFilter={statusFilter}
+          onSearchChange={setSearchQuery}
+          onStatusFilterChange={setStatusFilter}
+        />
       </div>
 
       {loading ? (
@@ -273,9 +276,10 @@ export default function UserListingsPage() {
                       ${listing.price.toLocaleString()}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={getStatusColor(listing.status) as any}>
-                        {listing.status}
-                      </Badge>
+                      <ListingStatusBadge 
+                        status={listing.status} 
+                        showDescription={true} 
+                      />
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center">
@@ -290,40 +294,11 @@ export default function UserListingsPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem asChild>
-                            <Link href={`/listing/${listing.id}`}>
-                              <Eye className="w-4 h-4 mr-2" />
-                              View
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <Link href={`/dashboard/edit/${listing.id}`}>
-                              <Edit className="w-4 h-4 mr-2" />
-                              Edit
-                            </Link>
-                          </DropdownMenuItem>
-                          {listing.status === 'ACTIVE' && (
-                            <DropdownMenuItem onClick={() => handleArchiveListing(listing.id)}>
-                              <Archive className="w-4 h-4 mr-2" />
-                              Archive
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem 
-                            onClick={() => handleDeleteListing(listing.id)}
-                            className="text-red-600"
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <ListingActionsDropdown
+                        listing={listing}
+                        onDelete={handleDeleteListing}
+                        onReactivate={handleReactivateListing}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}

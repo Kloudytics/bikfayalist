@@ -3,6 +3,7 @@ import { hash } from 'bcryptjs'
 import { prisma } from '@/lib/db'
 import { getClientIP } from '@/lib/ip'
 import { z } from 'zod'
+import { createRateLimit, getSecurityHeaders } from '@/lib/security'
 
 // Strong password validation schema
 const passwordSchema = z.string()
@@ -21,7 +22,19 @@ const registerSchema = z.object({
   }),
 })
 
+// Rate limiting: 3 registration attempts per hour per IP
+const rateLimiter = createRateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  maxRequests: 3,
+  message: 'Too many registration attempts. Please try again in an hour.'
+})
+
 export async function POST(req: NextRequest) {
+  // Apply rate limiting
+  const rateLimitResponse = await rateLimiter(req)
+  if (rateLimitResponse) {
+    return rateLimitResponse
+  }
   try {
     const body = await req.json()
     
@@ -86,7 +99,10 @@ export async function POST(req: NextRequest) {
         message: 'Account created successfully!',
         user: result 
       },
-      { status: 201 }
+      { 
+        status: 201,
+        headers: getSecurityHeaders()
+      }
     )
 
   } catch (error) {

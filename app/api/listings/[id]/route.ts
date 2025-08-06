@@ -109,12 +109,42 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    await prisma.listing.delete({
-      where: { id: id }
-    })
+    // Determine action based on listing status
+    if (listing.status === 'ACTIVE') {
+      // Archive ACTIVE listings instead of deleting for data integrity and performance
+      const updatedListing = await prisma.listing.update({
+        where: { id },
+        data: { status: 'ARCHIVED' },
+        include: {
+          category: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            }
+          }
+        }
+      })
+      
+      return NextResponse.json({ 
+        message: 'Active listing archived successfully',
+        action: 'archived',
+        listing: updatedListing
+      })
+    } else {
+      // Hard delete for PENDING, ARCHIVED, and FLAGGED listings
+      await prisma.listing.delete({
+        where: { id }
+      })
 
-    return NextResponse.json({ message: 'Listing deleted successfully' })
+      return NextResponse.json({ 
+        message: 'Listing deleted successfully',
+        action: 'deleted'
+      })
+    }
   } catch (error) {
+    console.error('Failed to delete/archive listing:', error)
     return NextResponse.json({ error: 'Failed to delete listing' }, { status: 500 })
   }
 }
