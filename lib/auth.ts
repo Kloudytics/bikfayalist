@@ -50,20 +50,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null
         }
 
-        // Check if user has a hashed password
+        // Verify password using bcrypt (all users now have hashed passwords)
         if (!user.password) {
-          // For existing demo users without passwords, use environment variable
-          const demoPassword = process.env.DEMO_PASSWORD || "disable_demo_login"
-          const isPasswordValid = credentials.password as string === demoPassword
-          if (!isPasswordValid) {
-            return null
-          }
-        } else {
-          // Use bcrypt to verify hashed password
-          const isPasswordValid = await compare(credentials.password as string, user.password)
-          if (!isPasswordValid) {
-            return null
-          }
+          console.error('SECURITY WARNING: User has no password hash:', user.email)
+          return null
+        }
+
+        const isPasswordValid = await compare(credentials.password as string, user.password)
+        if (!isPasswordValid) {
+          return null
         }
 
         return {
