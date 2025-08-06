@@ -284,7 +284,7 @@ export default function PrivacyPolicyPage() {
           </Card>
 
           {/* Cookies and Tracking */}
-          <Card>
+          <Card id="cookies">
             <CardHeader>
               <CardTitle>8. Cookies and Tracking Technologies</CardTitle>
             </CardHeader>

@@ -73,9 +73,9 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                <Link href="/help#safety" className="text-gray-400 hover:text-white transition-colors">
                   Safety Tips
-                </a>
+                </Link>
               </li>
               <li>
                 <Link href="/terms" className="text-gray-400 hover:text-white transition-colors">
@@ -105,7 +105,7 @@ export default function Footer() {
               </div>
               <div className="flex items-center space-x-3 text-gray-400">
                 <Phone className="w-4 h-4" />
-                <span>+961 4 987-654</span>
+                <span>+961 70 977 351</span>
               </div>
               <div className="flex items-center space-x-3 text-gray-400">
                 <MapPin className="w-4 h-4" />
@@ -135,12 +135,9 @@ export default function Footer() {
               <Link href="/privacy" className="text-gray-400 hover:text-white transition-colors">
                 Privacy
               </Link>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
+              <Link href="/privacy#cookies" className="text-gray-400 hover:text-white transition-colors">
                 Cookies
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                Accessibility
-              </a>
+              </Link>
             </div>
           </div>
         </div>
