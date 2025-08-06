@@ -124,12 +124,12 @@ The application uses a relational database with the following main entities:
 
 ## Demo Credentials
 
-For testing purposes, you can use any email address with the password `password123`.
+For testing purposes, you can use any email address with the password `B@troun007`.
 
 Sample accounts:
-- **Admin**: admin@bikfayalist.com / password123
-- **User**: john@example.com / password123
-- **User**: jane@example.com / password123
+- **Admin**: admin@bikfayalist.com / B@troun007
+- **User**: john@example.com / B@troun007
+- **User**: jane@example.com / B@troun007
 
 ## Deployment
 

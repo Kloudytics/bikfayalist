@@ -127,6 +127,29 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    // Check beta post limit (5 posts per account/household)
+    const userListingCount = await prisma.listing.count({
+      where: {
+        userId: session.user.id,
+        // Count all listings except deleted ones
+        status: {
+          in: ['ACTIVE', 'PENDING', 'ARCHIVED', 'FLAGGED']
+        }
+      }
+    })
+
+    const BETA_POST_LIMIT = 5
+    if (userListingCount >= BETA_POST_LIMIT) {
+      return NextResponse.json(
+        { 
+          error: `Beta limit reached: You can only create ${BETA_POST_LIMIT} posts during our beta period. This helps us maintain quality and prevent spam while we test the platform.`,
+          limit: BETA_POST_LIMIT,
+          current: userListingCount
+        }, 
+        { status: 429, headers: getSecurityHeaders() }
+      )
+    }
+
     const body = await req.json()
     
     // Sanitize input data

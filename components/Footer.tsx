@@ -15,7 +15,7 @@ export default function Footer() {
               <span className="text-xl font-bold">BikfayaList</span>
             </div>
             <p className="text-gray-400 text-sm">
-              The premier marketplace for buying, selling, and trading items locally. 
+              The premier marketplace for buying, selling, and trading items in the Bikfaya region. 
               Connect with your community and find great deals.
             </p>
             <div className="flex space-x-4">
@@ -105,18 +105,18 @@ export default function Footer() {
               </div>
               <div className="flex items-center space-x-3 text-gray-400">
                 <Phone className="w-4 h-4" />
-                <span>+1 (555) 123-4567</span>
+                <span>+961 4 987-654</span>
               </div>
               <div className="flex items-center space-x-3 text-gray-400">
                 <MapPin className="w-4 h-4" />
-                <span>New York, NY</span>
+                <span>Bikfaya, Lebanon</span>
               </div>
             </div>
             <div className="pt-2">
               <p className="text-xs text-gray-500">
                 Business Hours:<br />
-                Mon-Fri: 9AM-6PM EST<br />
-                Sat-Sun: 10AM-4PM EST
+                Mon-Fri: 9AM-6PM EET<br />
+                Sat-Sun: 10AM-4PM EET
               </p>
             </div>
           </div>

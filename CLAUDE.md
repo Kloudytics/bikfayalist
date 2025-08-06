@@ -48,7 +48,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Authentication System
 - Uses NextAuth.js v5 (Auth.js) with JWT strategy
 - New v5 exports: `auth()`, `signIn()`, `signOut()`, `handlers`
-- Demo setup: all users use password "password123"
+- Demo setup: all users use password "B@troun007"
 - Role-based access control (ADMIN/USER roles)
 - Custom pages at `/auth/signin` and `/auth/signup`
 - API routes use `auth()` instead of `getServerSession(authOptions)`

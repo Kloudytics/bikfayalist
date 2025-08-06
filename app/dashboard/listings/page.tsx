@@ -193,11 +193,16 @@ export default function UserListingsPage() {
           <div>
             <h1 className="text-3xl font-bold text-gray-900">My Listings</h1>
             <p className="text-gray-600">Manage all your classified listings</p>
+            <div className="mt-2">
+              <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50">
+                Beta: {5 - listings.length} posts remaining ({listings.length}/5)
+              </Badge>
+            </div>
           </div>
-          <Button asChild>
-            <Link href="/dashboard/create">
+          <Button asChild disabled={listings.length >= 5}>
+            <Link href={listings.length >= 5 ? "#" : "/dashboard/create"}>
               <Plus className="w-4 h-4 mr-2" />
-              Create Listing
+              {listings.length >= 5 ? "Limit Reached" : "Create Listing"}
             </Link>
           </Button>
         </div>

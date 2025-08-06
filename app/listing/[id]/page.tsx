@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { MapPin, Eye, Calendar, Phone, Mail, MessageCircle, ArrowLeft, Check, X, Flag } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { toast } from 'sonner'
+import { PhoneNumberPrivacy } from '@/components/PhoneNumberPrivacy'
 
 export default function ListingDetailPage() {
   const { id } = useParams()
@@ -354,12 +355,13 @@ export default function ListingDetailPage() {
                 </div>
               )}
 
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {listing.user.phone && (
-                  <div className="flex items-center text-sm">
-                    <Phone className="w-4 h-4 mr-2" />
-                    <span>{listing.user.phone}</span>
-                  </div>
+                  <PhoneNumberPrivacy 
+                    phoneNumber={listing.user.phone}
+                    listingId={listing.id}
+                    userId={listing.userId}
+                  />
                 )}
                 <div className="flex items-center text-sm">
                   <Mail className="w-4 h-4 mr-2" />

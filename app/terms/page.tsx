@@ -26,10 +26,38 @@ export default function TermsOfServicePage() {
             </CardContent>
           </Card>
 
+          {/* Beta Version Notice */}
+          <Card className="border-blue-200 bg-blue-50">
+            <CardHeader>
+              <CardTitle className="text-blue-800 flex items-center">
+                <span className="bg-blue-600 text-white px-2 py-1 rounded text-sm mr-2">BETA</span>
+                Beta Version Notice
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="prose prose-gray max-w-none">
+              <div className="bg-blue-100 p-4 rounded-lg border border-blue-300 mb-4">
+                <p className="text-blue-800 mb-3">
+                  <strong>Important:</strong> This is the first beta implementation of BikfayaList. We are continuously working to improve the platform and add new features.
+                </p>
+                <h4 className="font-semibold mb-2 text-blue-800">What to Expect:</h4>
+                <ul className="list-disc ml-6 space-y-1 text-blue-800">
+                  <li>The platform is fully functional but may have occasional issues</li>
+                  <li>New features and improvements will be added regularly</li>
+                  <li>Some advanced features are planned for future releases</li>
+                  <li>User feedback is highly valued and helps shape development</li>
+                  <li>Performance optimizations are ongoing</li>
+                </ul>
+                <p className="text-blue-800 mt-3">
+                  We appreciate your patience and feedback as we continue to enhance BikfayaList to better serve the Bikfaya community.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* User Accounts */}
           <Card>
             <CardHeader>
-              <CardTitle>2. User Accounts</CardTitle>
+              <CardTitle>3. User Accounts</CardTitle>
             </CardHeader>
             <CardContent className="prose prose-gray max-w-none">
               <h4 className="font-semibold mb-2">Account Creation</h4>
@@ -52,7 +80,7 @@ export default function TermsOfServicePage() {
           {/* Listing Rules */}
           <Card>
             <CardHeader>
-              <CardTitle>3. Listing Guidelines</CardTitle>
+              <CardTitle>4. Listing Guidelines</CardTitle>
             </CardHeader>
             <CardContent className="prose prose-gray max-w-none">
               <h4 className="font-semibold mb-2">Permitted Items</h4>
@@ -88,7 +116,7 @@ export default function TermsOfServicePage() {
           {/* User Conduct */}
           <Card>
             <CardHeader>
-              <CardTitle>4. User Conduct</CardTitle>
+              <CardTitle>5. User Conduct</CardTitle>
             </CardHeader>
             <CardContent className="prose prose-gray max-w-none">
               <h4 className="font-semibold mb-2">Acceptable Behavior</h4>
@@ -114,7 +142,7 @@ export default function TermsOfServicePage() {
           {/* Transactions */}
           <Card>
             <CardHeader>
-              <CardTitle>5. Transactions and Payments</CardTitle>
+              <CardTitle>6. Transactions and Payments</CardTitle>
             </CardHeader>
             <CardContent className="prose prose-gray max-w-none">
               <h4 className="font-semibold mb-2">Platform Role</h4>
@@ -141,7 +169,7 @@ export default function TermsOfServicePage() {
           {/* Privacy and Data */}
           <Card>
             <CardHeader>
-              <CardTitle>6. Privacy and Data Use</CardTitle>
+              <CardTitle>7. Privacy and Data Use</CardTitle>
             </CardHeader>
             <CardContent className="prose prose-gray max-w-none">
               <p>
@@ -159,7 +187,7 @@ export default function TermsOfServicePage() {
           {/* Intellectual Property */}
           <Card>
             <CardHeader>
-              <CardTitle>7. Intellectual Property</CardTitle>
+              <CardTitle>8. Intellectual Property</CardTitle>
             </CardHeader>
             <CardContent className="prose prose-gray max-w-none">
               <h4 className="font-semibold mb-2">Platform Content</h4>
@@ -180,7 +208,7 @@ export default function TermsOfServicePage() {
           {/* Disclaimers */}
           <Card>
             <CardHeader>
-              <CardTitle>8. Disclaimers and Limitations</CardTitle>
+              <CardTitle>9. Disclaimers and Limitations</CardTitle>
             </CardHeader>
             <CardContent className="prose prose-gray max-w-none">
               <h4 className="font-semibold mb-2">Platform Availability</h4>
@@ -203,7 +231,7 @@ export default function TermsOfServicePage() {
           {/* Termination */}
           <Card>
             <CardHeader>
-              <CardTitle>9. Account Termination</CardTitle>
+              <CardTitle>10. Account Termination</CardTitle>
             </CardHeader>
             <CardContent className="prose prose-gray max-w-none">
               <h4 className="font-semibold mb-2">Termination by You</h4>
@@ -234,7 +262,7 @@ export default function TermsOfServicePage() {
           {/* Legal */}
           <Card>
             <CardHeader>
-              <CardTitle>10. Legal Terms</CardTitle>
+              <CardTitle>11. Legal Terms</CardTitle>
             </CardHeader>
             <CardContent className="prose prose-gray max-w-none">
               <h4 className="font-semibold mb-2">Governing Law</h4>

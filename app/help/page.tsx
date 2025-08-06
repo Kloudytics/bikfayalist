@@ -55,6 +55,33 @@ export default function HelpPage() {
 
   const faqCategories: FAQCategory[] = [
     {
+      id: 'beta-information',
+      title: 'Beta Version Information',
+      icon: HelpCircle,
+      faqs: [
+        {
+          question: 'What does "Beta Version" mean?',
+          answer: 'BikfayaList is currently in beta testing phase. This means we\'re actively testing features and making improvements based on user feedback before our full launch.'
+        },
+        {
+          question: 'How many posts can I create during beta?',
+          answer: 'During our beta period, each account is limited to 5 posts. This helps us maintain quality while we test the platform. This limit will be increased after the beta period ends.'
+        },
+        {
+          question: 'Why is there a post limit during beta?',
+          answer: 'The 5-post limit per account (household) helps us maintain platform quality, prevent spam, and gather focused feedback while we perfect the user experience for our Bikfaya community.'
+        },
+        {
+          question: 'When will the beta period end?',
+          answer: 'We don\'t have a specific end date yet. The beta period will conclude once we\'ve implemented core features and addressed community feedback. All users will be notified when we transition to full launch.'
+        },
+        {
+          question: 'Will I lose my posts after beta?',
+          answer: 'No! All your listings and account data will be preserved when we transition from beta to full launch. Your posts will remain active and accessible.'
+        }
+      ]
+    },
+    {
       id: 'getting-started',
       title: 'Getting Started',
       icon: Users,
@@ -88,7 +115,7 @@ export default function HelpPage() {
         },
         {
           question: 'What payment methods are accepted?',
-          answer: 'Payment is arranged directly between buyers and sellers. We recommend secure methods like PayPal or meeting in person.'
+          answer: 'Payment is arranged directly between buyers and sellers. We recommend cash transactions for in-person meetings or secure bank transfers.'
         }
       ]
     },
@@ -187,6 +214,63 @@ export default function HelpPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Coverage Areas Section */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Users className="w-5 h-5 mr-2" />
+            Current Coverage Areas of BikfayaList
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-600 mb-6">
+            BikfayaList currently covers listings across the following towns, villages, and nearby areas:
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-3">Main Villages & Towns Covered:</h4>
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li>• Bikfaya (بكفيا)</li>
+                <li>• Mazraat Yachou (مزرعة يشوع)</li>
+                <li>• Ain Aar (عين عار)</li>
+                <li>• Qornet El Hamra (قرنة الحمرا)</li>
+                <li>• Beit Chabeb (بيت شباب)</li>
+                <li>• Hemlaya (حملايا)</li>
+                <li>• Abou Mizan (أبو ميزان)</li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-3">Additional Areas:</h4>
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li>• Douar (دوار)</li>
+                <li>• Mar Moussa El Douar (مار موسى الدوار)</li>
+                <li>• Dahr El Souane (ضهر الصوان)</li>
+                <li>• Baabdat (بعبدات)</li>
+                <li>• Zaraoun (زرعون)</li>
+                <li>• Dhour El Choueir (ضهور الشوير)</li>
+                <li>• Bois de Boulogne (غابة بولونيا)</li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-3">Expansion Areas:</h4>
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li>• Mar Moussa (مار موسى)</li>
+                <li>• Mtein (المتين)</li>
+                <li>• Mrouj (المروج)</li>
+              </ul>
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                <p className="text-xs text-blue-700">
+                  📍 We plan to expand gradually, covering additional surrounding villages and towns.
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
@@ -317,7 +401,7 @@ export default function HelpPage() {
                 <Phone className="w-5 h-5 text-gray-400" />
                 <div>
                   <p className="font-medium">Phone</p>
-                  <p className="text-sm text-gray-600">+1 (555) 123-4567</p>
+                  <p className="text-sm text-gray-600">+961 4 987-654</p>
                 </div>
               </div>
               
@@ -325,7 +409,7 @@ export default function HelpPage() {
                 <MessageCircle className="w-5 h-5 text-gray-400" />
                 <div>
                   <p className="font-medium">Business Hours</p>
-                  <p className="text-sm text-gray-600">Mon-Fri: 9AM-6PM EST</p>
+                  <p className="text-sm text-gray-600">Mon-Fri: 9AM-6PM EET</p>
                 </div>
               </div>
             </CardContent>

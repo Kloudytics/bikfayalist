@@ -91,11 +91,6 @@ export default function SignInPage() {
               </Button>
             </form>
 
-            <div className="mt-4 text-center">
-              <p className="text-sm text-gray-600">
-                Demo credentials: any email with password "password123"
-              </p>
-            </div>
           </CardContent>
         </Card>
       </div>
