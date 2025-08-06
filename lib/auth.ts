@@ -6,6 +6,7 @@ import { prisma } from "./db"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
+  trustHost: true, // Trust the configured NEXTAUTH_URL in production
   session: {
     strategy: "jwt",
     maxAge: 24 * 60 * 60, // 24 hours
