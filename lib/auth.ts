@@ -16,7 +16,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     maxAge: 24 * 60 * 60, // JWT expires in 24 hours
   },
   pages: {
-    signIn: "/auth/signin"
+    signIn: "/auth/signin",
+    signOut: "/auth/signin"
   },
   cookies: {
     sessionToken: {
@@ -26,7 +27,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         sameSite: 'lax',
         path: '/',
         secure: process.env.NODE_ENV === 'production',
-        domain: process.env.NODE_ENV === 'production' ? '.bikfayalist.com' : undefined
+        // Remove domain setting to prevent cross-domain issues
+        domain: undefined
       }
     }
   },
