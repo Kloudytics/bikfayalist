@@ -34,25 +34,41 @@ model Session {
 }
 
 model User {
-  id               String            @id @default(cuid())
-  name             String?
-  email            String            @unique
-  emailVerified    DateTime?
-  image            String?
-  password         String?
-  role             Role              @default(USER)
-  bio              String?
-  phone            String?
-  location         String?
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  accounts         Account[]
-  advertisements   Advertisement[]
-  favorites        Favorite[]
-  listings         Listing[]
-  messages         Message[]
-  sessions         Session[]
-  termsAcceptances TermsAcceptance[]
+  id                    String            @id @default(cuid())
+  name                  String?
+  email                 String            @unique
+  emailVerified         DateTime?
+  image                 String?
+  password              String?
+  role                  Role              @default(USER)
+  bio                   String?
+  phone                 String?
+  location              String?
+  
+  // Business User Fields
+  isBusinessUser        Boolean           @default(false)
+  businessName          String?
+  businessType          String?           // "DEALER", "AGENCY", "INDIVIDUAL"
+  subscriptionPlan      String?           // For business packages
+  subscriptionEndsAt    DateTime?
+  
+  // Usage Tracking
+  freeListingsThisMonth Int               @default(0)
+  monthlyResetAt        DateTime?
+  
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  accounts              Account[]
+  advertisements        Advertisement[]
+  favorites             Favorite[]
+  listings              Listing[]
+  messages              Message[]
+  sessions              Session[]
+  termsAcceptances      TermsAcceptance[]
+  payments              Payment[]
+  
+  @@index([isBusinessUser])
+  @@index([subscriptionEndsAt])
 }
 
 model VerificationToken {
@@ -64,32 +80,81 @@ model VerificationToken {
 }
 
 model Category {
-  id       String    @id @default(cuid())
-  name     String    @unique
-  slug     String    @unique
-  listings Listing[]
+  id              String            @id @default(cuid())
+  name            String            @unique
+  slug            String            @unique
+  description     String?
+  icon            String?
+  pricingTier     CategoryPricing   @default(STANDARD)
+  requiresPayment Boolean           @default(false)
+  basePrice       Float?            // Base price for premium listings in this category
+  listings        Listing[]
+}
+
+model PricingPlan {
+  id                String   @id @default(cuid())
+  name              String   @unique // "BASIC", "PREMIUM", "FEATURED"
+  price             Float    @default(0)
+  duration          Int      @default(30) // Days
+  maxPhotos         Int      @default(3)
+  canHidePrice      Boolean  @default(false)
+  isFeatured        Boolean  @default(false)
+  hasMapLocation    Boolean  @default(false)
+  hasPrioritySupport Boolean @default(false)
+  description       String?
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  listings          Listing[]
 }
 
 model Listing {
-  id              String        @id @default(cuid())
-  title           String
-  description     String
-  price           Float
-  images          String        @default("[]")
-  location        String
-  status          ListingStatus @default(PENDING)
-  rejectionReason String?
-  featured        Boolean       @default(false)
-  views           Int           @default(0)
-  categoryId      String
-  userId          String
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  favorites       Favorite[]
-  category        Category      @relation(fields: [categoryId], references: [id])
-  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  messages        Message[]
-  productViews    ProductView[]
+  id                String        @id @default(cuid())
+  title             String
+  description       String
+  price             Float?        // Nullable for "Price on request"
+  hidePrice         Boolean       @default(false)
+  images            String        @default("[]")
+  location          String
+  status            ListingStatus @default(PENDING)
+  rejectionReason   String?
+  
+  // Pricing & Featured Logic
+  pricingPlanId     String?
+  featured          Boolean       @default(false) // Keep existing column
+  isFeatured        Boolean       @default(false) // New enhanced featured logic
+  featuredUntil     DateTime?     // When featured status expires
+  featuredPosition  Int?          // For rotation logic
+  bumpedAt          DateTime?     // Last time listing was bumped to top
+  
+  // Analytics & Limits
+  views             Int           @default(0)
+  contactClicks     Int           @default(0)
+  freeListingsUsed  Int           @default(0) // Track user's free listing usage
+  
+  // Business Fields
+  isBusinessListing Boolean       @default(false)
+  dealerInfo        String?       // JSON for dealer/agency info
+  
+  categoryId        String
+  userId            String
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  expiresAt         DateTime?     // Based on pricing plan duration
+  
+  favorites         Favorite[]
+  category          Category      @relation(fields: [categoryId], references: [id])
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pricingPlan       PricingPlan?  @relation(fields: [pricingPlanId], references: [id])
+  messages          Message[]
+  productViews      ProductView[]
+  addOns            ListingAddOn[]
+
+  @@index([isFeatured])
+  @@index([featuredUntil])
+  @@index([status])
+  @@index([categoryId])
+  @@index([expiresAt])
 }
 
 model Message {
@@ -189,4 +254,64 @@ enum AdvertisementPriority {
   LOW
   MEDIUM
   HIGH
+}
+
+enum CategoryPricing {
+  STANDARD    // Free with limits (general products, services)
+  PREMIUM     // Paid tiers (cars, real estate)
+  BUSINESS    // Business-only categories
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum AddOnType {
+  FEATURED_WEEK      // Featured for 1 week
+  BUMP_TO_TOP        // Bump to top once
+  EXTRA_PHOTOS       // Additional photo slots
+  VIDEO_SUPPORT      // YouTube video link
+  URGENT_TAG         // Urgent badge
+  MAP_LOCATION       // Map pin location
+}
+
+model ListingAddOn {
+  id                String     @id @default(cuid())
+  listingId         String
+  addOnType         AddOnType
+  price             Float
+  isActive          Boolean    @default(true)
+  expiresAt         DateTime?  // For time-based add-ons
+  purchasedAt       DateTime   @default(now())
+  listing           Listing    @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  payment           Payment?   @relation(fields: [paymentId], references: [id])
+  paymentId         String?
+  
+  @@index([listingId])
+  @@index([addOnType])
+  @@index([expiresAt])
+}
+
+model Payment {
+  id                String        @id @default(cuid())
+  userId            String
+  amount            Float
+  currency          String        @default("USD")
+  status            PaymentStatus @default(PENDING)
+  paymentMethod     String?       // "stripe", "paypal", "manual"
+  transactionId     String?       // External payment ID
+  description       String?
+  metadata          String?       // JSON for additional data
+  createdAt         DateTime      @default(now())
+  completedAt       DateTime?
+  
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  addOns            ListingAddOn[]
+  
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
 }

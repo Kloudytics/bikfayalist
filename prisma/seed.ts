@@ -1,4 +1,4 @@
-import { PrismaClient, Role, ListingStatus } from '@prisma/client'
+import { PrismaClient, Role, ListingStatus, CategoryPricing } from '@prisma/client'
 import { hash } from 'bcryptjs'
 
 const prisma = new PrismaClient()
@@ -10,18 +10,18 @@ async function main() {
   const hashedPassword = await hash("B@troun007", 12)
   console.log('🔐 Demo password hashed for secure authentication')
 
-  // Create essential categories for Lebanon market
+  // Create essential categories with pricing tiers
   const categories = [
-    { name: 'Electronics', slug: 'electronics' },
-    { name: 'Vehicles', slug: 'vehicles' },
-    { name: 'Real Estate', slug: 'real-estate' },
-    { name: 'Jobs', slug: 'jobs' },
-    { name: 'Services', slug: 'services' },
-    { name: 'Fashion & Beauty', slug: 'fashion' },
-    { name: 'Home & Garden', slug: 'home-garden' },
-    { name: 'Sports & Recreation', slug: 'sports' },
-    { name: 'Books & Education', slug: 'books' },
-    { name: 'Others', slug: 'others' },
+    { name: 'Electronics', slug: 'electronics', pricingTier: CategoryPricing.STANDARD, requiresPayment: false },
+    { name: 'Vehicles', slug: 'vehicles', pricingTier: CategoryPricing.PREMIUM, requiresPayment: true, basePrice: 10 },
+    { name: 'Real Estate', slug: 'real-estate', pricingTier: CategoryPricing.PREMIUM, requiresPayment: true, basePrice: 8 },
+    { name: 'Jobs', slug: 'jobs', pricingTier: CategoryPricing.STANDARD, requiresPayment: false },
+    { name: 'Services', slug: 'services', pricingTier: CategoryPricing.STANDARD, requiresPayment: false },
+    { name: 'Fashion & Beauty', slug: 'fashion', pricingTier: CategoryPricing.STANDARD, requiresPayment: false },
+    { name: 'Home & Garden', slug: 'home-garden', pricingTier: CategoryPricing.STANDARD, requiresPayment: false },
+    { name: 'Sports & Recreation', slug: 'sports', pricingTier: CategoryPricing.STANDARD, requiresPayment: false },
+    { name: 'Books & Education', slug: 'books', pricingTier: CategoryPricing.STANDARD, requiresPayment: false },
+    { name: 'Others', slug: 'others', pricingTier: CategoryPricing.STANDARD, requiresPayment: false },
   ]
 
   console.log('📂 Creating categories...')
@@ -98,12 +98,60 @@ async function main() {
     console.log('ℹ️ Sample listing already exists, skipping...')
   }
 
+  // Create default pricing plans
+  console.log('💰 Creating pricing plans...')
+  
+  const pricingPlans = [
+    {
+      name: 'BASIC',
+      price: 0,
+      duration: 30,
+      maxPhotos: 3,
+      canHidePrice: false,
+      isFeatured: false,
+      hasMapLocation: false,
+      hasPrioritySupport: false,
+      description: 'Free basic listing with essential features',
+    },
+    {
+      name: 'PREMIUM',
+      price: 3,
+      duration: 30,
+      maxPhotos: 10,
+      canHidePrice: true,
+      isFeatured: false,
+      hasMapLocation: true,
+      hasPrioritySupport: true,
+      description: 'Enhanced listing with premium features and priority placement',
+    },
+    {
+      name: 'FEATURED',
+      price: 8,
+      duration: 30,
+      maxPhotos: 15,
+      canHidePrice: true,
+      isFeatured: true,
+      hasMapLocation: true,
+      hasPrioritySupport: true,
+      description: 'Maximum visibility with featured placement and all premium features',
+    },
+  ]
+
+  for (const plan of pricingPlans) {
+    await prisma.pricingPlan.upsert({
+      where: { name: plan.name },
+      update: {},
+      create: plan,
+    })
+  }
+
   console.log('✅ Database seeding completed successfully!')
   console.log('')
   console.log('🎯 Production-ready seed data created:')
-  console.log('   📂 10 Essential categories')
+  console.log('   📂 10 Essential categories (with pricing tiers)')
   console.log('   👤 2 Users (1 admin + 1 demo user)')  
   console.log('   📝 1 Sample listing')
+  console.log('   💰 3 Pricing plans (Basic, Premium, Featured)')
   console.log('')
   console.log('🔑 Demo login credentials:')
   console.log('   Email: admin@bikfayalist.com')

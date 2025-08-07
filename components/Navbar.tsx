@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { User, Settings, LogOut, Plus, Shield, MessageCircle, Heart, Megaphone, Menu, X } from 'lucide-react'
+import { User, Settings, LogOut, Plus, Shield, MessageCircle, Heart, Megaphone, Menu, X, Crown } from 'lucide-react'
 
 export default function Navbar() {
   const { data: session } = useSession()
@@ -35,6 +35,9 @@ export default function Navbar() {
               </Link>
               <Link href="/categories" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">
                 Categories
+              </Link>
+              <Link href="/pricing" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">
+                Pricing
               </Link>
             </div>
           </div>
@@ -93,6 +96,12 @@ export default function Navbar() {
                       <Link href="/dashboard">
                         <User className="mr-2 h-4 w-4" />
                         Dashboard
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/dashboard/business">
+                        <Crown className="mr-2 h-4 w-4" />
+                        Business
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
@@ -175,6 +184,13 @@ export default function Navbar() {
               >
                 Categories
               </Link>
+              <Link 
+                href="/pricing" 
+                className="text-gray-700 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Pricing
+              </Link>
               
               {session ? (
                 <>
@@ -184,6 +200,13 @@ export default function Navbar() {
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Dashboard
+                  </Link>
+                  <Link 
+                    href="/dashboard/business" 
+                    className="text-gray-700 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Business
                   </Link>
                   <Link 
                     href="/messages" 

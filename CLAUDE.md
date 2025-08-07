@@ -69,3 +69,29 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Demo credentials available in README.md
 - Image upload system configured for UploadThing but may need API keys
 - SQLite for development, designed for PostgreSQL in production
+
+## Future Enhancement Roadmap
+
+### High Priority (Business Critical)
+- **Monetization & Pricing Rules** - Featured listing tiers, premium placement, category-based pricing
+- **Business Rule Engine** - Modular workflow system (onCreate → applyRules → triggerWebhooks)
+- **User Event Tracking** - Track listing_created, contact_clicked, filter_applied for analytics/LLM insights
+- **Multi-region Support** - Region fields for users/listings to scale to other Lebanese cities
+
+### Medium Priority (Scalability)
+- **Flexible Listing Schema** - Category-specific custom fields (JSON-based for cars, real estate, etc.)
+- **Queue System Integration** - BullMQ/RabbitMQ for background jobs (email, WhatsApp, AI moderation)
+- **Advanced Search & Filtering** - Location-based search, price ranges, advanced category filters
+- **Real-time Messaging System** - WebSocket-based chat between buyers/sellers
+
+### Low Priority (Enhancement)
+- **Multi-language Support** - Arabic/French localization for Lebanese market
+- **User Rating & Review System** - Trust scores and feedback between users
+- **Social Media Integration** - Auto-posting to Facebook Marketplace, Instagram
+- **AI-powered Features** - Auto-categorization, price suggestions, content moderation
+
+### Technical Debt & Optimization
+- **Performance Monitoring** - PostHog/Mixpanel integration for user behavior analytics
+- **Multi-domain Architecture** - Support for broumanalist.com, zalkalist.com, listlb.com/[region]
+- **Advanced Image Management** - Multiple image uploads, image optimization, CDN integration
+- **SEO Optimization** - Dynamic sitemaps, structured data, meta optimization per listing
