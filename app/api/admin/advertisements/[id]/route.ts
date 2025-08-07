@@ -23,7 +23,7 @@ const updateAdvertisementSchema = z.object({
 // GET - Fetch single advertisement
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth()
@@ -32,8 +32,10 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { id } = await params
+
     const advertisement = await prisma.advertisement.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         createdBy: {
           select: {
@@ -59,7 +61,7 @@ export async function GET(
 // PUT - Update advertisement
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth()
@@ -80,8 +82,10 @@ export async function PUT(
       updateData.endDate = new Date(validatedData.endDate)
     }
 
+    const { id } = await params
+
     const advertisement = await prisma.advertisement.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
       include: {
         createdBy: {
@@ -112,7 +116,7 @@ export async function PUT(
 // DELETE - Delete advertisement
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth()
@@ -121,8 +125,10 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { id } = await params
+
     await prisma.advertisement.delete({
-      where: { id: params.id }
+      where: { id }
     })
 
     return NextResponse.json({ message: 'Advertisement deleted successfully' })
