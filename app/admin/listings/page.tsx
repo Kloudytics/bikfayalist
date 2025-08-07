@@ -53,10 +53,21 @@ export default function AdminListingsPage() {
 
   useEffect(() => {
     if (status === 'loading') return
-    if (!session || session.user.role !== 'ADMIN') {
-      redirect('/')
+    
+    // More robust session validation to prevent redirect loops
+    if (!session?.user) {
+      console.log('No session found, redirecting to signin')
+      redirect('/auth/signin')
+      return
     }
     
+    if (session.user.role !== 'ADMIN') {
+      console.log('User is not admin, redirecting to home')
+      redirect('/')
+      return
+    }
+    
+    // Only fetch data if we have a valid admin session
     fetchListings()
     fetchStats()
   }, [session, status])
@@ -77,15 +88,15 @@ export default function AdminListingsPage() {
       params.append('limit', '50')
       
       const response = await fetch(`/api/listings?${params.toString()}`)
-      if (response.ok) {
-        const data = await response.json()
-        setListings(data.listings || [])
-      } else {
-        toast.error('Failed to load listings')
+      if (!response.ok) {
+        throw new Error(`Listings API failed: ${response.status}`)
       }
+      const data = await response.json()
+      setListings(data.listings || [])
     } catch (error) {
       console.error('Failed to fetch listings:', error)
       toast.error('Failed to load listings')
+      setListings([]) // Set empty array on error
     } finally {
       setLoading(false)
     }
@@ -94,17 +105,25 @@ export default function AdminListingsPage() {
   const fetchStats = async () => {
     try {
       const response = await fetch('/api/admin/stats')
-      if (response.ok) {
-        const data = await response.json()
-        setStats({
-          totalListings: data.totalListings,
-          pendingListings: data.pendingListings,
-          activeListings: data.activeListings,
-          flaggedListings: data.flaggedListings,
-        })
+      if (!response.ok) {
+        throw new Error(`Stats API failed: ${response.status}`)
       }
+      const data = await response.json()
+      setStats({
+        totalListings: data.totalListings,
+        pendingListings: data.pendingListings,
+        activeListings: data.activeListings,
+        flaggedListings: data.flaggedListings,
+      })
     } catch (error) {
       console.error('Failed to fetch stats:', error)
+      // Set default stats to prevent UI errors
+      setStats({
+        totalListings: 0,
+        pendingListings: 0,
+        activeListings: 0,
+        flaggedListings: 0,
+      })
     }
   }
 

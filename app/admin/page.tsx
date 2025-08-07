@@ -46,10 +46,21 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (status === 'loading') return
-    if (!session || session.user.role !== 'ADMIN') {
-      redirect('/')
+    
+    // More robust session validation
+    if (!session?.user) {
+      console.log('No session found, redirecting to signin')
+      redirect('/auth/signin')
+      return
     }
     
+    if (session.user.role !== 'ADMIN') {
+      console.log('User is not admin, redirecting to home')
+      redirect('/')
+      return
+    }
+    
+    // Only fetch data if we have a valid admin session
     fetchStats()
     fetchUsers()
     fetchListings()
@@ -58,20 +69,34 @@ export default function AdminPage() {
   const fetchStats = async () => {
     try {
       const response = await fetch('/api/admin/stats')
+      if (!response.ok) {
+        throw new Error(`Stats API failed: ${response.status}`)
+      }
       const data = await response.json()
       setStats(data)
     } catch (error) {
       console.error('Failed to fetch stats:', error)
+      // Set default stats to prevent UI errors
+      setStats({
+        totalUsers: 0,
+        totalListings: 0,
+        activeListings: 0,
+        pendingListings: 0,
+      })
     }
   }
 
   const fetchUsers = async () => {
     try {
       const response = await fetch('/api/admin/users')
+      if (!response.ok) {
+        throw new Error(`Users API failed: ${response.status}`)
+      }
       const data = await response.json()
       setUsers(data)
     } catch (error) {
       console.error('Failed to fetch users:', error)
+      setUsers([])
     }
   }
 
@@ -82,10 +107,14 @@ export default function AdminPage() {
       if (searchQuery) params.append('search', searchQuery)
       
       const response = await fetch(`/api/listings?${params.toString()}`)
+      if (!response.ok) {
+        throw new Error(`Listings API failed: ${response.status}`)
+      }
       const data = await response.json()
       setListings(data.listings || [])
     } catch (error) {
       console.error('Failed to fetch listings:', error)
+      setListings([])
     }
   }
 
