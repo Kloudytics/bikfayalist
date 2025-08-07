@@ -80,3 +80,13 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Advertising Banner Animations */
+@keyframes progress {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}

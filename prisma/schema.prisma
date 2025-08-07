@@ -47,6 +47,7 @@ model User {
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   accounts         Account[]
+  advertisements   Advertisement[]
   favorites        Favorite[]
   listings         Listing[]
   messages         Message[]
@@ -143,6 +144,35 @@ model TermsAcceptance {
   @@index([privacyVersion])
 }
 
+model Advertisement {
+  id                String               @id @default(cuid())
+  company           String
+  headline          String
+  description       String
+  ctaText           String
+  ctaUrl            String
+  backgroundImage   String?
+  backgroundColor   String               @default("from-blue-600 to-purple-600")
+  textColor         String               @default("text-white")
+  isActive          Boolean              @default(true)
+  priority          AdvertisementPriority @default(MEDIUM)
+  startDate         DateTime?
+  endDate           DateTime?
+  budget            Float?
+  targetAudience    String?              // JSON string for audience targeting
+  clickCount        Int                  @default(0)
+  impressionCount   Int                  @default(0)
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  createdByUserId   String
+  createdBy         User                 @relation(fields: [createdByUserId], references: [id])
+
+  @@index([isActive])
+  @@index([priority])
+  @@index([startDate])
+  @@index([endDate])
+}
+
 enum Role {
   ADMIN
   USER
@@ -153,4 +183,10 @@ enum ListingStatus {
   PENDING
   ARCHIVED
   FLAGGED
+}
+
+enum AdvertisementPriority {
+  LOW
+  MEDIUM
+  HIGH
 }

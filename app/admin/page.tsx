@@ -157,6 +157,9 @@ export default function AdminPage() {
           <Button asChild variant="outline">
             <Link href="/admin/messages">Manage Messages</Link>
           </Button>
+          <Button asChild variant="outline">
+            <Link href="/admin/advertisements">Manage Advertisements</Link>
+          </Button>
         </div>
       </div>
 

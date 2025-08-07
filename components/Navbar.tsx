@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { User, Settings, LogOut, Plus, Shield, MessageCircle, Heart } from 'lucide-react'
+import { User, Settings, LogOut, Plus, Shield, MessageCircle, Heart, Megaphone } from 'lucide-react'
 
 export default function Navbar() {
   const { data: session } = useSession()
@@ -104,6 +104,12 @@ export default function Navbar() {
                           <Link href="/admin/messages">
                             <MessageCircle className="mr-2 h-4 w-4" />
                             Message Management
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin/advertisements">
+                            <Megaphone className="mr-2 h-4 w-4" />
+                            Advertisement Management
                           </Link>
                         </DropdownMenuItem>
                       </>

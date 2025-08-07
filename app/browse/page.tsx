@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import ListingCard from '@/components/ListingCard'
 import SearchFilters from '@/components/SearchFilters'
+import AdvertisingBanner from '@/components/advertising/AdvertisingBanner'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
@@ -132,6 +133,21 @@ function BrowseContent() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-4">Browse Listings</h1>
         <p className="text-gray-600">Discover amazing deals in your area</p>
+      </div>
+
+      {/* Premium Advertising Banner */}
+      <div className="mb-8">
+        <AdvertisingBanner
+          className="shadow-lg"
+          onAdClick={(adId, adUrl) => {
+            console.log('Ad clicked:', adId, adUrl)
+            // Track analytics here
+          }}
+          onDismiss={() => {
+            console.log('Ad banner dismissed')
+            // Track dismissal analytics
+          }}
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
