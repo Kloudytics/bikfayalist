@@ -44,11 +44,12 @@ export default function AdvertisingBanner({
   const [progressKey, setProgressKey] = useState(0)
   const [advertisements, setAdvertisements] = useState<Advertisement[]>([])
   const [loading, setLoading] = useState(true)
+  const [isVisible, setIsVisible] = useState(false)
 
   const activeAds = advertisements.filter(ad => ad.isActive)
   const currentAd = activeAds[currentAdIndex]
 
-  // Fetch advertisements from API
+  // Fetch advertisements from API (non-blocking)
   useEffect(() => {
     const fetchAds = async () => {
       try {
@@ -56,15 +57,24 @@ export default function AdvertisingBanner({
         if (response.ok) {
           const data = await response.json()
           setAdvertisements(data.advertisements || [])
+        } else {
+          // Graceful fallback - hide banner on API error
+          setAdvertisements([])
         }
       } catch (error) {
         console.error('Failed to fetch advertisements:', error)
+        // Graceful fallback - hide banner on network error
+        setAdvertisements([])
       } finally {
         setLoading(false)
+        // Smooth fade-in animation after loading
+        setTimeout(() => setIsVisible(true), 50)
       }
     }
 
-    fetchAds()
+    // Non-blocking: Set a minimal delay to allow page to render first
+    const timer = setTimeout(fetchAds, 100)
+    return () => clearTimeout(timer)
   }, [])
 
   // Auto-slide functionality
@@ -133,19 +143,16 @@ export default function AdvertisingBanner({
     }
   }, [currentAdIndex, currentAd])
 
-  if (loading) {
-    return (
-      <div className={`relative w-full h-32 md:h-40 rounded-lg overflow-hidden shadow-lg bg-gray-200 animate-pulse ${className}`} />
-    )
-  }
-
-  if (isDismissed || activeAds.length === 0) {
+  // Non-blocking approach: Don't show anything while loading
+  if (loading || isDismissed || activeAds.length === 0) {
     return null
   }
 
   return (
     <div 
-      className={`relative w-full rounded-lg overflow-hidden shadow-lg bg-gradient-to-r from-blue-600 to-purple-700 text-white ${className}`}
+      className={`relative w-full rounded-lg overflow-hidden shadow-lg bg-gradient-to-r from-blue-600 to-purple-700 text-white transition-opacity duration-500 ${
+        isVisible ? 'opacity-100' : 'opacity-0'
+      } ${className}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       role="banner"
@@ -170,16 +177,21 @@ export default function AdvertisingBanner({
         className="relative h-32 md:h-40 flex items-center"
       >
         {/* Background Image with Overlay */}
-        <div className="absolute inset-0">
-          <Image
-            src={currentAd.backgroundImage || 'https://images.pexels.com/photos/356056/pexels-photo-356056.jpeg'}
-            alt={currentAd.headline}
-            fill
-            className="object-cover opacity-30"
-            priority={currentAdIndex === 0}
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/80 to-purple-700/80" />
-        </div>
+        {currentAd.backgroundImage && (
+          <div className="absolute inset-0">
+            <Image
+              src={currentAd.backgroundImage}
+              alt={currentAd.headline}
+              fill
+              className="object-cover opacity-30"
+              loading="lazy"
+              placeholder="blur"
+              blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+              priority={false}
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-600/80 to-purple-700/80" />
+          </div>
+        )}
         
         {/* Close Button */}
         {showDismissButton && (

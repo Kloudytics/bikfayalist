@@ -135,20 +135,18 @@ function BrowseContent() {
         <p className="text-gray-600">Discover amazing deals in your area</p>
       </div>
 
-      {/* Premium Advertising Banner */}
-      <div className="mb-8">
-        <AdvertisingBanner
-          className="shadow-lg"
-          onAdClick={(adId, adUrl) => {
-            console.log('Ad clicked:', adId, adUrl)
-            // Track analytics here
-          }}
-          onDismiss={() => {
-            console.log('Ad banner dismissed')
-            // Track dismissal analytics
-          }}
-        />
-      </div>
+      {/* Premium Advertising Banner - Non-blocking, loads after page */}
+      <AdvertisingBanner
+        className="shadow-lg mb-8"
+        onAdClick={(adId, adUrl) => {
+          console.log('Ad clicked:', adId, adUrl)
+          // Track analytics here
+        }}
+        onDismiss={() => {
+          console.log('Ad banner dismissed')
+          // Track dismissal analytics
+        }}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Filters Sidebar */}
