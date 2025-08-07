@@ -41,18 +41,29 @@ export const metadata: Metadata = {
     description: 'The premier classified listing platform for Bikfaya, Lebanon. Connect with your local community and find great deals.',
     images: [
       {
-        url: '/favicon.png',
-        width: 512,
-        height: 512,
+        url: '/BIKFAYA-LIST-SOCIAL-SHARE.jpg',
+        width: 1200,
+        height: 630,
         alt: 'BikfayaList - Local Classified Listings for Bikfaya, Lebanon',
       },
     ],
   },
   twitter: {
-    card: 'summary',
+    card: 'summary_large_image',
     title: 'BikfayaList - Buy, Sell, Trade in Bikfaya & Surrounding Areas',
     description: 'The premier classified listing platform for Bikfaya, Lebanon. Connect with your local community.',
-    images: ['/favicon.png'],
+    images: ['/BIKFAYA-LIST-SOCIAL-SHARE.jpg'],
+  },
+  other: {
+    // WhatsApp and other messaging apps
+    'og:image': '/BIKFAYA-LIST-SOCIAL-SHARE.jpg',
+    'og:image:width': '1200',
+    'og:image:height': '630',
+    'og:image:alt': 'BikfayaList - Local Classified Listings for Bikfaya, Lebanon',
+    // Telegram specific
+    'telegram:channel': '@bikfayalist',
+    // General social sharing
+    'theme-color': '#2563eb',
   },
 }
 
