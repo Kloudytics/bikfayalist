@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
@@ -11,10 +12,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { User, Settings, LogOut, Plus, Shield, MessageCircle, Heart, Megaphone } from 'lucide-react'
+import { User, Settings, LogOut, Plus, Shield, MessageCircle, Heart, Megaphone, Menu, X } from 'lucide-react'
 
 export default function Navbar() {
   const { data: session } = useSession()
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   return (
     <nav className="border-b bg-white">
@@ -37,13 +39,33 @@ export default function Navbar() {
             </div>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 md:space-x-4">
+            {/* Mobile menu button */}
+            <div className="md:hidden">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="p-2"
+              >
+                {isMobileMenuOpen ? (
+                  <X className="h-5 w-5" />
+                ) : (
+                  <Menu className="h-5 w-5" />
+                )}
+              </Button>
+            </div>
             {session ? (
               <>
-                <Button asChild>
+                <Button asChild className="hidden sm:flex">
                   <Link href="/dashboard/create">
                     <Plus className="w-4 h-4 mr-2" />
                     Post Ad
+                  </Link>
+                </Button>
+                <Button asChild className="sm:hidden" size="sm">
+                  <Link href="/dashboard/create">
+                    <Plus className="w-4 h-4" />
                   </Link>
                 </Button>
                 <DropdownMenu>
@@ -134,6 +156,121 @@ export default function Navbar() {
             )}
           </div>
         </div>
+
+        {/* Mobile menu panel */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden">
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t">
+              <Link 
+                href="/browse" 
+                className="text-gray-700 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Browse Listings
+              </Link>
+              <Link 
+                href="/categories" 
+                className="text-gray-700 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Categories
+              </Link>
+              
+              {session ? (
+                <>
+                  <Link 
+                    href="/dashboard" 
+                    className="text-gray-700 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                  <Link 
+                    href="/messages" 
+                    className="text-gray-700 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Messages
+                  </Link>
+                  <Link 
+                    href="/favorites" 
+                    className="text-gray-700 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Favorites
+                  </Link>
+                  <Link 
+                    href="/dashboard/settings" 
+                    className="text-gray-700 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Settings
+                  </Link>
+                  
+                  {session.user?.role === 'ADMIN' && (
+                    <>
+                      <div className="border-t pt-3 mt-3">
+                        <p className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Admin
+                        </p>
+                        <Link 
+                          href="/admin" 
+                          className="text-gray-700 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          Admin Panel
+                        </Link>
+                        <Link 
+                          href="/admin/messages" 
+                          className="text-gray-700 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          Message Management
+                        </Link>
+                        <Link 
+                          href="/admin/advertisements" 
+                          className="text-gray-700 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          Advertisement Management
+                        </Link>
+                      </div>
+                    </>
+                  )}
+                  
+                  <div className="border-t pt-3 mt-3">
+                    <button
+                      onClick={() => {
+                        setIsMobileMenuOpen(false)
+                        signOut()
+                      }}
+                      className="text-gray-700 hover:text-red-600 hover:bg-gray-50 block w-full text-left px-3 py-2 rounded-md text-base font-medium"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Link 
+                    href="/auth/signin" 
+                    className="text-gray-700 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Sign In
+                  </Link>
+                  <Link 
+                    href="/auth/signup" 
+                    className="bg-blue-600 text-white hover:bg-blue-700 block px-3 py-2 rounded-md text-base font-medium"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Sign Up
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </nav>
   )
