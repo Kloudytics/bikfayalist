@@ -76,23 +76,11 @@ export async function GET(req: NextRequest) {
       where.location = { contains: location }
     }
 
-    // Enhanced featured positioning logic
-    const featuredListings = await prisma.listing.findMany({
-      where: {
-        ...where,
-        OR: [
-          { 
-            isFeatured: true,
-            featuredUntil: { gt: new Date() } // Still within featured period
-          },
-          { 
-            featured: true // Legacy featured support
-          }
-        ]
-      },
+    // Simplified query with backward compatibility
+    const listings = await prisma.listing.findMany({
+      where,
       include: {
         category: true,
-        pricingPlan: true,
         user: {
           select: {
             id: true,
@@ -102,84 +90,17 @@ export async function GET(req: NextRequest) {
         }
       },
       orderBy: [
-        { featuredPosition: 'asc' }, // Rotation logic
-        { bumpedAt: 'desc' },        // Recent bumps first
+        { featured: 'desc' }, // Legacy featured support
         { createdAt: 'desc' }
       ],
+      skip: (page - 1) * limit,
+      take: limit,
     })
 
-    const regularListings = await prisma.listing.findMany({
-      where: {
-        ...where,
-        AND: [
-          { 
-            OR: [
-              { isFeatured: false },
-              { featuredUntil: { lte: new Date() } },
-              { isFeatured: null }
-            ]
-          },
-          {
-            OR: [
-              { featured: false },
-              { featured: null }
-            ]
-          }
-        ]
-      },
-      include: {
-        category: true,
-        pricingPlan: true,
-        user: {
-          select: {
-            id: true,
-            name: true,
-            image: true,
-          }
-        }
-      },
-      orderBy: [
-        { bumpedAt: 'desc' },  // Recently bumped regular listings first
-        { createdAt: 'desc' }
-      ],
-    })
-
-    // Smart positioning: max 3 featured at top, then interleave
-    const maxFeaturedTop = 3
-    const topFeatured = featuredListings.slice(0, maxFeaturedTop)
-    const remainingFeatured = featuredListings.slice(maxFeaturedTop)
-    
-    // Combine with intelligent pagination
-    const allListings = [...topFeatured, ...regularListings]
-    
-    // Interleave remaining featured listings every 4-5 positions
-    const finalListings = []
-    let featuredIndex = 0
-    
-    for (let i = 0; i < allListings.length && finalListings.length < limit; i++) {
-      const currentPosition = finalListings.length
-      
-      // Add a remaining featured listing every 4-5 items (after the top 3)
-      if (currentPosition > maxFeaturedTop && 
-          (currentPosition - maxFeaturedTop) % 5 === 0 && 
-          featuredIndex < remainingFeatured.length) {
-        finalListings.push(remainingFeatured[featuredIndex])
-        featuredIndex++
-      }
-      
-      if (finalListings.length < limit) {
-        finalListings.push(allListings[i])
-      }
-    }
-    
-    // Apply pagination to the intelligently sorted results
-    const paginatedListings = finalListings.slice((page - 1) * limit, page * limit)
-    
-    // Get total count for pagination
-    const total = featuredListings.length + regularListings.length
+    const total = await prisma.listing.count({ where })
 
     return NextResponse.json({
-      listings: paginatedListings,
+      listings,
       pagination: {
         page,
         limit,
@@ -244,66 +165,19 @@ export async function POST(req: NextRequest) {
     
     const validatedData = listingSchema.parse(sanitizedData)
 
-    // Get category info to check pricing requirements
-    const category = await prisma.category.findUnique({
-      where: { id: validatedData.categoryId }
-    })
-
-    // Determine pricing plan (default to BASIC if not specified)
-    let pricingPlan = null
-    if (validatedData.pricingPlanId) {
-      pricingPlan = await prisma.pricingPlan.findUnique({
-        where: { id: validatedData.pricingPlanId }
-      })
-    } else {
-      // Default to BASIC plan
-      pricingPlan = await prisma.pricingPlan.findUnique({
-        where: { name: 'BASIC' }
-      })
-    }
-
-    if (!pricingPlan) {
-      return NextResponse.json(
-        { error: 'Invalid pricing plan selected' }, 
-        { status: 400, headers: getSecurityHeaders() }
-      )
-    }
-
-    // Check if category requires payment and plan is free
-    if (category?.requiresPayment && pricingPlan.price === 0) {
-      return NextResponse.json(
-        { 
-          error: `${category.name} listings require a premium plan. Please select a paid plan to continue.`,
-          categoryPricing: category.pricingTier,
-          basePrice: category.basePrice
-        }, 
-        { status: 402, headers: getSecurityHeaders() }
-      )
-    }
-
-    // Calculate expiration date based on pricing plan
-    const expiresAt = new Date()
-    expiresAt.setDate(expiresAt.getDate() + pricingPlan.duration)
-
-    // Set featured status and expiration
-    const isFeatured = pricingPlan.isFeatured
-    const featuredUntil = isFeatured ? expiresAt : null
-
+    // Simplified listing creation - focus on core functionality first
     const listing = await prisma.listing.create({
       data: {
-        ...validatedData,
+        title: validatedData.title,
+        description: validatedData.description,
+        price: validatedData.price || 0,
+        location: validatedData.location,
+        categoryId: validatedData.categoryId,
         images: JSON.stringify(validatedData.images || []),
         userId: session.user.id,
-        pricingPlanId: pricingPlan.id,
-        isFeatured,
-        featuredUntil,
-        expiresAt,
-        // Set pricing plan features
-        hidePrice: validatedData.hidePrice && pricingPlan.canHidePrice,
       },
       include: {
         category: true,
-        pricingPlan: true,
         user: {
           select: {
             id: true,
