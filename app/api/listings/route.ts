@@ -76,28 +76,95 @@ export async function GET(req: NextRequest) {
       where.location = { contains: location }
     }
 
-    // Simplified query with backward compatibility
-    const listings = await prisma.listing.findMany({
-      where,
-      include: {
-        category: true,
-        user: {
-          select: {
-            id: true,
-            name: true,
-            image: true,
+    // Enhanced featured positioning with graceful fallback
+    let listings, total
+    
+    try {
+      // Try enhanced positioning first
+      const featuredListings = await prisma.listing.findMany({
+        where: {
+          ...where,
+          OR: [
+            { 
+              isFeatured: true,
+              featuredUntil: { gt: new Date() }
+            },
+            { 
+              featured: true
+            }
+          ]
+        },
+        include: {
+          category: true,
+          pricingPlan: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            }
           }
-        }
-      },
-      orderBy: [
-        { featured: 'desc' }, // Legacy featured support
-        { createdAt: 'desc' }
-      ],
-      skip: (page - 1) * limit,
-      take: limit,
-    })
+        },
+        orderBy: [
+          { createdAt: 'desc' }
+        ],
+      })
 
-    const total = await prisma.listing.count({ where })
+      const regularListings = await prisma.listing.findMany({
+        where: {
+          ...where,
+          featured: { not: true },
+          isFeatured: { not: true }
+        },
+        include: {
+          category: true,
+          pricingPlan: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            }
+          }
+        },
+        orderBy: [
+          { createdAt: 'desc' }
+        ],
+      })
+
+      // Simple featured-first approach
+      const allListings = [...featuredListings, ...regularListings]
+      const paginatedListings = allListings.slice((page - 1) * limit, page * limit)
+      
+      listings = paginatedListings
+      total = featuredListings.length + regularListings.length
+      
+    } catch (enhancedError) {
+      console.log('Enhanced query failed, falling back to simple query:', enhancedError)
+      
+      // Fallback to simple query
+      listings = await prisma.listing.findMany({
+        where,
+        include: {
+          category: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            }
+          }
+        },
+        orderBy: [
+          { featured: 'desc' },
+          { createdAt: 'desc' }
+        ],
+        skip: (page - 1) * limit,
+        take: limit,
+      })
+
+      total = await prisma.listing.count({ where })
+    }
 
     return NextResponse.json({
       listings,
@@ -165,17 +232,73 @@ export async function POST(req: NextRequest) {
     
     const validatedData = listingSchema.parse(sanitizedData)
 
-    // Simplified listing creation - focus on core functionality first
+    // Get category info to check pricing requirements
+    const category = await prisma.category.findUnique({
+      where: { id: validatedData.categoryId }
+    })
+
+    // Determine pricing plan (default to BASIC if not specified)
+    let pricingPlan = null
+    if (validatedData.pricingPlanId) {
+      pricingPlan = await prisma.pricingPlan.findUnique({
+        where: { id: validatedData.pricingPlanId }
+      })
+    } else {
+      // Default to BASIC plan
+      pricingPlan = await prisma.pricingPlan.findUnique({
+        where: { name: 'BASIC' }
+      })
+    }
+
+    if (!pricingPlan) {
+      return NextResponse.json(
+        { error: 'Invalid pricing plan selected' }, 
+        { status: 400, headers: getSecurityHeaders() }
+      )
+    }
+
+    // Check if category requires payment and plan is free (with fallback)
+    if (category?.requiresPayment && pricingPlan && pricingPlan.price === 0) {
+      return NextResponse.json(
+        { 
+          error: `${category.name} listings require a premium plan. Please select a paid plan to continue.`,
+          categoryPricing: category.pricingTier || 'PREMIUM',
+          basePrice: category.basePrice || 5
+        }, 
+        { status: 402, headers: getSecurityHeaders() }
+      )
+    }
+
+    // Calculate expiration date based on pricing plan
+    const expiresAt = new Date()
+    expiresAt.setDate(expiresAt.getDate() + pricingPlan.duration)
+
+    // Set featured status and expiration
+    const isFeatured = pricingPlan.isFeatured
+    const featuredUntil = isFeatured ? expiresAt : null
+
+    // Create listing with fallback for missing fields
+    const listingData: any = {
+      title: validatedData.title,
+      description: validatedData.description,
+      price: validatedData.price || 0,
+      location: validatedData.location,
+      categoryId: validatedData.categoryId,
+      images: JSON.stringify(validatedData.images || []),
+      userId: session.user.id,
+    }
+
+    // Add advanced fields only if they exist in schema
+    if (pricingPlan) {
+      listingData.pricingPlanId = pricingPlan.id
+      listingData.isFeatured = isFeatured
+      listingData.featuredUntil = featuredUntil
+      listingData.expiresAt = expiresAt
+      listingData.hidePrice = validatedData.hidePrice && pricingPlan.canHidePrice
+    }
+
     const listing = await prisma.listing.create({
-      data: {
-        title: validatedData.title,
-        description: validatedData.description,
-        price: validatedData.price || 0,
-        location: validatedData.location,
-        categoryId: validatedData.categoryId,
-        images: JSON.stringify(validatedData.images || []),
-        userId: session.user.id,
-      },
+      data: listingData,
       include: {
         category: true,
         user: {
