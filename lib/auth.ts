@@ -73,17 +73,56 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   callbacks: {
     async jwt({ token, user }) {
+      console.log('JWT Callback:', { 
+        hasUser: !!user, 
+        tokenSub: token.sub, 
+        userRole: user?.role,
+        tokenRole: token.role
+      })
+      
       if (user) {
         token.role = user.role
+        console.log('JWT: Setting role to', user.role)
       }
       return token
     },
     async session({ session, token }) {
+      console.log('Session Callback:', {
+        hasToken: !!token,
+        tokenSub: token?.sub,
+        tokenRole: token?.role,
+        sessionUserId: session?.user?.id
+      })
+      
       if (token && token.sub) {
         session.user.id = token.sub
         session.user.role = token.role as string
+        console.log('Session: Set user ID and role', token.sub, token.role)
       }
       return session
     },
+    async signIn({ user, account, profile }) {
+      console.log('SignIn Callback:', {
+        userId: user.id,
+        userEmail: user.email,
+        userRole: user.role,
+        provider: account?.provider
+      })
+      return true
+    }
+  },
+  events: {
+    async signOut(message) {
+      console.log('SignOut Event:', {
+        message: message,
+        timestamp: new Date().toISOString()
+      })
+    },
+    async session(message) {
+      console.log('Session Event:', {
+        message: message,
+        timestamp: new Date().toISOString()
+      })
+    }
   },
 })

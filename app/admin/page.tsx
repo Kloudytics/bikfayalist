@@ -45,21 +45,34 @@ export default function AdminPage() {
   const [rejectionReason, setRejectionReason] = useState('')
 
   useEffect(() => {
-    if (status === 'loading') return
+    console.log('Admin page useEffect:', {
+      status,
+      hasSession: !!session,
+      hasUser: !!session?.user,
+      userId: session?.user?.id,
+      userRole: session?.user?.role,
+      userEmail: session?.user?.email
+    })
+    
+    if (status === 'loading') {
+      console.log('Admin: Still loading session...')
+      return
+    }
     
     // More robust session validation
     if (!session?.user) {
-      console.log('No session found, redirecting to signin')
+      console.log('Admin: No session found, redirecting to signin')
       redirect('/auth/signin')
       return
     }
     
     if (session.user.role !== 'ADMIN') {
-      console.log('User is not admin, redirecting to home')
+      console.log('Admin: User is not admin, redirecting to home. Role:', session.user.role)
       redirect('/')
       return
     }
     
+    console.log('Admin: Valid admin session, fetching data...')
     // Only fetch data if we have a valid admin session
     fetchStats()
     fetchUsers()
