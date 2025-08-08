@@ -16,8 +16,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     maxAge: 24 * 60 * 60, // JWT expires in 24 hours
   },
   pages: {
-    signIn: "/auth/signin",
-    signOut: "/auth/signin"
+    signIn: "/auth/signin"
   },
   cookies: {
     sessionToken: {
@@ -26,9 +25,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: process.env.NODE_ENV === 'production',
-        // Remove domain setting to prevent cross-domain issues
-        domain: undefined
+        secure: process.env.NODE_ENV === 'production'
       }
     }
   },
@@ -75,46 +72,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     })
   ],
   callbacks: {
-    async jwt({ token, user, account }) {
+    async jwt({ token, user }) {
       if (user) {
         token.role = user.role
-        token.lastLogin = Date.now()
       }
-      
-      // Add security checks for JWT
-      if (token.lastLogin && Date.now() - (token.lastLogin as number) > 7 * 24 * 60 * 60 * 1000) {
-        // Force re-authentication if token is older than 7 days
-        return {}
-      }
-      
       return token
     },
     async session({ session, token }) {
       if (token && token.sub) {
         session.user.id = token.sub
         session.user.role = token.role as string
-        
-        // Add session security metadata
-        session.lastLogin = token.lastLogin as number
-        session.expiresAt = Date.now() + (24 * 60 * 60 * 1000) // 24 hours from now
       }
       return session
-    },
-    async signIn({ user, account, profile }) {
-      // Additional security checks during sign in
-      if (!user.email) {
-        return false
-      }
-      
-      // Log successful sign in for audit
-      console.log('SECURITY_LOG: User signed in', {
-        userId: user.id,
-        email: user.email,
-        timestamp: new Date().toISOString(),
-        provider: account?.provider || 'credentials'
-      })
-      
-      return true
     },
   },
 })

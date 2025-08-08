@@ -146,10 +146,7 @@ export default function Navbar() {
                       </>
                     )}
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => signOut({ 
-                        callbackUrl: '/auth/signin',
-                        redirect: true 
-                      })}>
+                    <DropdownMenuItem onClick={() => signOut()}>
                       <LogOut className="mr-2 h-4 w-4" />
                       Sign out
                     </DropdownMenuItem>
@@ -268,10 +265,7 @@ export default function Navbar() {
                     <button
                       onClick={() => {
                         setIsMobileMenuOpen(false)
-                        signOut({ 
-                          callbackUrl: '/auth/signin',
-                          redirect: true 
-                        })
+                        signOut()
                       }}
                       className="text-gray-700 hover:text-red-600 hover:bg-gray-50 block w-full text-left px-3 py-2 rounded-md text-base font-medium"
                     >
