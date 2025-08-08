@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Mail, CheckCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
 // Password validation function
@@ -47,6 +49,7 @@ export default function SignUpPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [passwordErrors, setPasswordErrors] = useState<string[]>([])
   const [acceptedTerms, setAcceptedTerms] = useState(false)
+  const [registrationSuccess, setRegistrationSuccess] = useState(false)
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -88,12 +91,13 @@ export default function SignUpPage() {
         }),
       })
 
+      const data = await response.json()
+      
       if (response.ok) {
-        toast.success('Account created successfully! Please sign in.')
-        router.push('/auth/signin')
+        setRegistrationSuccess(true)
+        toast.success('Account created successfully!')
       } else {
-        const error = await response.json()
-        toast.error(error.message || 'Failed to create account')
+        toast.error(data.error || 'Failed to create account')
       }
     } catch (error) {
       toast.error('An error occurred')
@@ -114,6 +118,68 @@ export default function SignUpPage() {
       const errors = validatePassword(value)
       setPasswordErrors(errors)
     }
+  }
+
+  if (registrationSuccess) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full">
+          <Card>
+            <CardHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                <CheckCircle className="w-12 h-12 text-green-600" />
+              </div>
+              <CardTitle className="text-2xl font-bold text-green-600">Account Created!</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Alert className="border-green-200 bg-green-50">
+                <Mail className="h-4 w-4" />
+                <AlertDescription className="text-green-800">
+                  Welcome to BikfayaList! We've sent a verification email to <strong>{formData.email}</strong>. 
+                  Please check your inbox and click the verification link to activate your account.
+                </AlertDescription>
+              </Alert>
+
+              <div className="space-y-3 text-sm text-gray-600">
+                <div className="flex items-center">
+                  <CheckCircle className="w-4 h-4 text-green-600 mr-2" />
+                  Account created successfully
+                </div>
+                <div className="flex items-center">
+                  <Mail className="w-4 h-4 text-blue-600 mr-2" />
+                  Verification email sent
+                </div>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 className="font-medium text-blue-800 mb-2">What's next?</h4>
+                <ol className="text-sm text-blue-700 space-y-1">
+                  <li>1. Check your email inbox (and spam folder)</li>
+                  <li>2. Click the verification link in the email</li>
+                  <li>3. Sign in and start posting your listings!</li>
+                </ol>
+              </div>
+
+              <div className="flex flex-col space-y-2">
+                <Button asChild className="w-full">
+                  <Link href="/auth/signin">Sign In Now</Link>
+                </Button>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/">Back to Home</Link>
+                </Button>
+              </div>
+
+              <div className="text-center text-xs text-gray-500">
+                Didn't receive the email? Check your spam folder or{' '}
+                <Link href="/auth/resend-verification" className="text-blue-600 hover:underline">
+                  request a new one
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
   }
 
   return (

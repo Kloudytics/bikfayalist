@@ -91,6 +91,15 @@ export default function SignInPage() {
               </Button>
             </form>
 
+            <div className="mt-4 text-center">
+              <Link 
+                href="/auth/forgot-password"
+                className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+              >
+                Forgot your password?
+              </Link>
+            </div>
+
           </CardContent>
         </Card>
       </div>

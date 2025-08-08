@@ -82,6 +82,12 @@ export default function AdminPage() {
 - Development: `NEXTAUTH_URL=http://localhost:3000`
 - Production: `NEXTAUTH_URL=https://bikfayalist.com` (no trailing slash)
 
+### Email Service (Resend) - REQUIRED
+- `RESEND_API_KEY=re_dPb9JT4u_FpFGB5K7PXPTM7R4sofq2Zmx`
+- `RESEND_FROM_EMAIL=no-reply@email.bikfayalist.com`
+
+**Critical**: Email verification and password reset won't work without proper Resend configuration.
+
 ### Database
 - Development: SQLite via `DATABASE_URL="file:./dev.db"`
 - Production: PostgreSQL connection string
@@ -124,6 +130,34 @@ export default function AdminPage() {
 
 ---
 
+## Email Verification & Password Reset Features
+
+### Features Added
+- ✅ Email verification for new user registrations
+- ✅ Password reset functionality 
+- ✅ Beautiful email templates with proper branding
+- ✅ Rate limiting for security (5 min cooldown for password reset)
+- ✅ Token-based verification with expiry (24h verification, 1h reset)
+- ✅ Comprehensive UI flows for all email scenarios
+
+### API Endpoints
+- `POST /api/auth/send-verification` - Send email verification
+- `POST /api/auth/verify-email` - Verify email with token
+- `POST /api/auth/forgot-password` - Request password reset
+- `POST /api/auth/reset-password` - Reset password with token
+
+### Pages Added
+- `/auth/verify-email` - Email verification page
+- `/auth/forgot-password` - Password reset request
+- `/auth/reset-password` - New password setup
+- `/auth/resend-verification` - Resend verification email
+
+### Database Schema Updates
+- Added `User.passwordResetAt` field for rate limiting
+- Utilizes existing `User.emailVerified` and `VerificationToken` model
+
+---
+
 ## Future Deployment Checklist
 
 1. ✅ Test authentication flows in production
@@ -132,3 +166,7 @@ export default function AdminPage() {
 4. ✅ Ensure environment variables are set
 5. ✅ Test signout functionality
 6. ✅ Clear browser cache after deployment
+7. 🆕 Test email verification flow (registration → email → verification)
+8. 🆕 Test password reset flow (forgot password → email → reset)
+9. 🆕 Verify Resend email delivery in production
+10. 🆕 Check email templates render correctly in email clients

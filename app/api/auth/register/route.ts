@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { hash } from 'bcryptjs'
 import { prisma } from '@/lib/db'
 import { getClientIP } from '@/lib/ip'
+import { createEmailVerificationToken } from '@/lib/tokens'
+import { sendVerificationEmail } from '@/lib/email'
 import { z } from 'zod'
 import { createRateLimit, getSecurityHeaders } from '@/lib/security'
 
@@ -94,10 +96,25 @@ export async function POST(req: NextRequest) {
       return user
     })
 
+    // Send email verification after successful registration
+    try {
+      const token = await createEmailVerificationToken(email)
+      const emailResult = await sendVerificationEmail(email, token, name)
+      
+      if (!emailResult.success) {
+        console.error('Failed to send verification email:', emailResult.error)
+        // Don't fail registration if email fails, but log it
+      }
+    } catch (emailError) {
+      console.error('Email verification setup failed:', emailError)
+      // Continue with registration success even if email fails
+    }
+
     return NextResponse.json(
       { 
-        message: 'Account created successfully!',
-        user: result 
+        message: 'Account created successfully! Please check your email to verify your account.',
+        user: result,
+        emailVerificationSent: true
       },
       { 
         status: 201,
