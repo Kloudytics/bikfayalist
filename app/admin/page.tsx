@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
-import { redirect } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -29,6 +29,7 @@ import { Users, FileText, Eye, AlertTriangle, Check, X } from 'lucide-react'
 
 export default function AdminPage() {
   const { data: session, status } = useSession()
+  const router = useRouter()
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalListings: 0,
@@ -43,6 +44,7 @@ export default function AdminPage() {
     listingId: null
   })
   const [rejectionReason, setRejectionReason] = useState('')
+  const [redirecting, setRedirecting] = useState(false)
 
   useEffect(() => {
     console.log('Admin page useEffect:', {
@@ -51,8 +53,15 @@ export default function AdminPage() {
       hasUser: !!session?.user,
       userId: session?.user?.id,
       userRole: session?.user?.role,
-      userEmail: session?.user?.email
+      userEmail: session?.user?.email,
+      redirecting
     })
+    
+    // Prevent multiple redirects
+    if (redirecting) {
+      console.log('Admin: Already redirecting, skipping...')
+      return
+    }
     
     // Only run validation once session is loaded
     if (status === 'loading') {
@@ -63,21 +72,24 @@ export default function AdminPage() {
     // Check for unauthenticated state
     if (status === 'unauthenticated' || !session) {
       console.log('Admin: User not authenticated, redirecting to signin')
-      redirect('/auth/signin')
+      setRedirecting(true)
+      router.replace('/auth/signin')
       return
     }
     
     // Check for missing user data (shouldn't happen if authenticated)
     if (!session.user) {
       console.log('Admin: Session exists but no user data, redirecting to signin')
-      redirect('/auth/signin')
+      setRedirecting(true)
+      router.replace('/auth/signin')
       return
     }
     
     // Check admin role
     if (session.user.role !== 'ADMIN') {
       console.log('Admin: User is not admin, redirecting to home. Role:', session.user.role)
-      redirect('/')
+      setRedirecting(true)
+      router.replace('/')
       return
     }
     
@@ -86,7 +98,7 @@ export default function AdminPage() {
     fetchStats()
     fetchUsers()
     fetchListings()
-  }, [session, status])
+  }, [session, status, redirecting, router])
 
   const fetchStats = async () => {
     try {
@@ -191,8 +203,10 @@ export default function AdminPage() {
     }
   }
 
-  if (status === 'loading') {
-    return <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">Loading...</div>
+  if (status === 'loading' || redirecting) {
+    return <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {status === 'loading' ? 'Loading...' : 'Redirecting...'}
+    </div>
   }
 
   return (
