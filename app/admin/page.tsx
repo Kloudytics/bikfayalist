@@ -1,8 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
-import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -28,7 +26,6 @@ import { Textarea } from '@/components/ui/textarea'
 import { Users, FileText, Eye, AlertTriangle, Check, X } from 'lucide-react'
 
 export default function AdminPage() {
-  const { data: session, status } = useSession()
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalListings: 0,
@@ -45,15 +42,10 @@ export default function AdminPage() {
   const [rejectionReason, setRejectionReason] = useState('')
 
   useEffect(() => {
-    if (status === 'loading') return
-    if (!session || session.user.role !== 'ADMIN') {
-      redirect('/')
-    }
-    
     fetchStats()
     fetchUsers()
     fetchListings()
-  }, [session, status])
+  }, [])
 
   const fetchStats = async () => {
     try {
@@ -140,9 +132,6 @@ export default function AdminPage() {
     }
   }
 
-  if (status === 'loading') {
-    return <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">Loading...</div>
-  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
