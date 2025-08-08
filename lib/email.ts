@@ -5,7 +5,7 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 // Email configuration
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'noreply@bikfayalist.com'
 const SITE_NAME = 'BikfayaList'
-const SITE_URL = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+const SITE_URL = process.env.NEXTAUTH_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://bikfayalist.com')
 
 export interface EmailTemplate {
   to: string

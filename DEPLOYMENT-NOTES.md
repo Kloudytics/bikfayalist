@@ -83,7 +83,7 @@ export default function AdminPage() {
 - Production: `NEXTAUTH_URL=https://bikfayalist.com` (no trailing slash)
 
 ### Email Service (Resend) - REQUIRED
-- `RESEND_API_KEY=re_dPb9JT4u_FpFGB5K7PXPTM7R4sofq2Zmx`
+- `RESEND_API_KEY=re_your_actual_resend_api_key_here`
 - `RESEND_FROM_EMAIL=no-reply@email.bikfayalist.com`
 
 **Critical**: Email verification and password reset won't work without proper Resend configuration.
