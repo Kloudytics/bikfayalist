@@ -133,7 +133,7 @@ export default function ListingForm({ categories, onSubmit, initialData, isLoadi
                 onValueChange={(value) => setValue('categoryId', value)}
                 defaultValue={initialData?.categoryId}
               >
-                <SelectTrigger>
+                <SelectTrigger id="category">
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>

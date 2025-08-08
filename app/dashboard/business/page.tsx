@@ -315,7 +315,7 @@ export default function BusinessDashboardPage() {
               <div>
                 <Label htmlFor="businessType">Business Type</Label>
                 <Select value={businessType} onValueChange={setBusinessType}>
-                  <SelectTrigger>
+                  <SelectTrigger id="businessType">
                     <SelectValue placeholder="Select business type" />
                   </SelectTrigger>
                   <SelectContent>

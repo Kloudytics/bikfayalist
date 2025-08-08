@@ -143,7 +143,7 @@ export default function SearchFilters({ onFiltersChange, categories, initialFilt
         <div>
           <Label htmlFor="category">Category</Label>
           <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger>
+            <SelectTrigger id="category">
               <SelectValue placeholder="All categories" />
             </SelectTrigger>
             <SelectContent>

@@ -304,6 +304,7 @@ export default function AdvertisementsManagement() {
                   <div>
                     <Label htmlFor="priority">Priority Level</Label>
                     <select 
+                      id="priority"
                       className="w-full px-3 py-2 border rounded-md"
                       value={formData.priority}
                       onChange={(e) => setFormData({...formData, priority: e.target.value as any})}

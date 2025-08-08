@@ -219,7 +219,7 @@ export default function CreateEnhancedListingPage() {
                 <div>
                   <Label htmlFor="categoryId">Category *</Label>
                   <Select onValueChange={(value) => setValue('categoryId', value)}>
-                    <SelectTrigger>
+                    <SelectTrigger id="categoryId">
                       <SelectValue placeholder="Select a category" />
                     </SelectTrigger>
                     <SelectContent>
