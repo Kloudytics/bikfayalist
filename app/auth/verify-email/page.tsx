@@ -11,10 +11,11 @@ import { toast } from 'sonner'
 
 export default function VerifyEmailPage() {
   const searchParams = useSearchParams()
-  const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'resending'>('loading')
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
   const [message, setMessage] = useState('')
   const [email, setEmail] = useState('')
   const [token, setToken] = useState('')
+  const [isResending, setIsResending] = useState(false)
 
   useEffect(() => {
     const emailParam = searchParams.get('email')
@@ -61,7 +62,7 @@ export default function VerifyEmailPage() {
   const resendVerification = async () => {
     if (!email) return
 
-    setStatus('resending')
+    setIsResending(true)
     try {
       const response = await fetch('/api/auth/send-verification', {
         method: 'POST',
@@ -76,12 +77,12 @@ export default function VerifyEmailPage() {
         setMessage('New verification email sent. Please check your inbox.')
       } else {
         toast.error(data.error || 'Failed to send verification email')
-        setStatus('error')
       }
     } catch (error) {
       console.error('Resend error:', error)
       toast.error('Failed to resend verification email')
-      setStatus('error')
+    } finally {
+      setIsResending(false)
     }
   }
 
@@ -101,13 +102,11 @@ export default function VerifyEmailPage() {
               {status === 'loading' && <Loader2 className="w-12 h-12 animate-spin text-blue-600" />}
               {status === 'success' && <CheckCircle className="w-12 h-12 text-green-600" />}
               {status === 'error' && <XCircle className="w-12 h-12 text-red-600" />}
-              {status === 'resending' && <Mail className="w-12 h-12 text-blue-600" />}
             </div>
             <CardTitle className="text-2xl font-bold">
               {status === 'loading' && 'Verifying Email...'}
               {status === 'success' && 'Email Verified!'}
               {status === 'error' && 'Verification Failed'}
-              {status === 'resending' && 'Sending Email...'}
             </CardTitle>
           </CardHeader>
 
@@ -146,10 +145,10 @@ export default function VerifyEmailPage() {
                   {email && (
                     <Button 
                       onClick={resendVerification} 
-                      disabled={status === 'resending'}
+                      disabled={isResending}
                       className="w-full"
                     >
-                      {status === 'resending' ? (
+                      {isResending ? (
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                           Sending...
