@@ -34,31 +34,31 @@ model Session {
 }
 
 model User {
-  id                    String            @id @default(cuid())
+  id                    String             @id @default(cuid())
   name                  String?
-  email                 String            @unique
+  email                 String             @unique
   emailVerified         DateTime?
   image                 String?
   password              String?
-  passwordResetAt       DateTime?         // Track when user last requested password reset
-  role                  Role              @default(USER)
+  passwordResetAt       DateTime?          // Track when user last requested password reset
+  role                  Role               @default(USER)
   bio                   String?
   phone                 String?
   location              String?
   
   // Business User Fields
-  isBusinessUser        Boolean           @default(false)
+  isBusinessUser        Boolean            @default(false)
   businessName          String?
-  businessType          String?           // "DEALER", "AGENCY", "INDIVIDUAL"
-  subscriptionPlan      String?           // For business packages
+  businessType          String?            // "DEALER", "AGENCY", "INDIVIDUAL"
+  subscriptionPlan      String?            // For business packages
   subscriptionEndsAt    DateTime?
   
   // Usage Tracking
-  freeListingsThisMonth Int               @default(0)
+  freeListingsThisMonth Int                @default(0)
   monthlyResetAt        DateTime?
   
-  createdAt             DateTime          @default(now())
-  updatedAt             DateTime          @updatedAt
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
   accounts              Account[]
   advertisements        Advertisement[]
   favorites             Favorite[]
@@ -67,6 +67,7 @@ model User {
   sessions              Session[]
   termsAcceptances      TermsAcceptance[]
   payments              Payment[]
+  preferences           UserPreferences?
   
   @@index([isBusinessUser])
   @@index([subscriptionEndsAt])
@@ -78,6 +79,21 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model UserPreferences {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  emailAlerts          Boolean  @default(true)
+  messageNotifications Boolean  @default(true)
+  listingUpdates       Boolean  @default(false)
+  marketingEmails      Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
 }
 
 model Category {

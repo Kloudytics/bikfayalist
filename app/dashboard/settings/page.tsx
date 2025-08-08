@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { redirect } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -11,12 +11,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { User, Mail, Phone, MapPin, Bell, Shield, Trash2 } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { User, Mail, Phone, MapPin, Bell, Shield, Trash2, Upload, Camera } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function SettingsPage() {
   const { data: session, status, update } = useSession()
   const [loading, setLoading] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -30,6 +34,11 @@ export default function SettingsPage() {
     listingUpdates: false,
     marketingEmails: false,
   })
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  })
 
   useEffect(() => {
     if (status === 'loading') return
@@ -41,9 +50,13 @@ export default function SettingsPage() {
 
   const fetchUserProfile = async () => {
     try {
-      const response = await fetch('/api/profile')
-      if (response.ok) {
-        const data = await response.json()
+      const [profileResponse, preferencesResponse] = await Promise.all([
+        fetch('/api/profile'),
+        fetch('/api/profile/notifications')
+      ])
+
+      if (profileResponse.ok) {
+        const data = await profileResponse.json()
         setFormData({
           name: data.user.name || '',
           email: data.user.email || '',
@@ -53,6 +66,11 @@ export default function SettingsPage() {
         })
       } else {
         toast.error('Failed to load profile data')
+      }
+
+      if (preferencesResponse.ok) {
+        const prefsData = await preferencesResponse.json()
+        setNotifications(prefsData.preferences)
       }
     } catch (error) {
       console.error('Failed to fetch user profile:', error)
@@ -117,13 +135,120 @@ export default function SettingsPage() {
     }
   }
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file size (2MB limit)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('File size must be less than 2MB')
+      return
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('File must be an image')
+      return
+    }
+
+    setUploadingImage(true)
+
+    try {
+      const formData = new FormData()
+      formData.append('image', file)
+
+      const response = await fetch('/api/profile/image', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        
+        // Update the session with new image
+        await update({
+          ...session,
+          user: {
+            ...session?.user,
+            image: data.imageUrl,
+          }
+        })
+        
+        toast.success('Profile picture updated successfully!')
+      } else {
+        const error = await response.json()
+        toast.error(error.message || 'Failed to upload image')
+      }
+    } catch (error) {
+      console.error('Failed to upload image:', error)
+      toast.error('Failed to upload image')
+    } finally {
+      setUploadingImage(false)
+    }
+  }
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast.error('New passwords do not match')
+      return
+    }
+
+    if (passwordForm.newPassword.length < 6) {
+      toast.error('Password must be at least 6 characters long')
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      const response = await fetch('/api/profile/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword,
+        }),
+      })
+
+      if (response.ok) {
+        toast.success('Password changed successfully!')
+        setShowPasswordDialog(false)
+        setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
+      } else {
+        const error = await response.json()
+        toast.error(error.message || 'Failed to change password')
+      }
+    } catch (error) {
+      console.error('Failed to change password:', error)
+      toast.error('Failed to change password')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleSaveNotifications = async () => {
     setLoading(true)
     try {
-      // In a real app, you'd make an API call to update notification preferences
-      await new Promise(resolve => setTimeout(resolve, 500))
-      toast.success('Notification preferences updated!')
+      const response = await fetch('/api/profile/notifications', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(notifications),
+      })
+
+      if (response.ok) {
+        toast.success('Notification preferences updated!')
+      } else {
+        const error = await response.json()
+        toast.error(error.message || 'Failed to update preferences')
+      }
     } catch (error) {
+      console.error('Failed to update preferences:', error)
       toast.error('Failed to update preferences')
     } finally {
       setLoading(false)
@@ -177,8 +302,31 @@ export default function SettingsPage() {
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <Button type="button" variant="outline" size="sm">
-                    Change Photo
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingImage}
+                  >
+                    {uploadingImage ? (
+                      <>
+                        <Upload className="w-4 h-4 mr-2 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Camera className="w-4 h-4 mr-2" />
+                        Change Photo
+                      </>
+                    )}
                   </Button>
                   <p className="text-sm text-gray-500 mt-1">
                     JPG, GIF or PNG. Max size of 2MB.
@@ -339,9 +487,54 @@ export default function SettingsPage() {
               <p className="text-sm text-gray-500 mb-2">
                 Last changed 30 days ago
               </p>
-              <Button variant="outline">
-                Change Password
-              </Button>
+              <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+                <DialogTrigger asChild>
+                  <Button variant="outline">
+                    Change Password
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Change Password</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleChangePassword} className="space-y-4">
+                    <div>
+                      <Label htmlFor="currentPassword">Current Password</Label>
+                      <Input
+                        id="currentPassword"
+                        type="password"
+                        value={passwordForm.currentPassword}
+                        onChange={(e) => setPasswordForm({...passwordForm, currentPassword: e.target.value})}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="newPassword">New Password</Label>
+                      <Input
+                        id="newPassword"
+                        type="password"
+                        value={passwordForm.newPassword}
+                        onChange={(e) => setPasswordForm({...passwordForm, newPassword: e.target.value})}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                      <Input
+                        id="confirmPassword"
+                        type="password"
+                        value={passwordForm.confirmPassword}
+                        onChange={(e) => setPasswordForm({...passwordForm, confirmPassword: e.target.value})}
+                        required
+                      />
+                    </div>
+                    <div className="flex gap-2 pt-4">
+                      <Button type="submit" disabled={loading}>Change Password</Button>
+                      <Button type="button" variant="outline" onClick={() => setShowPasswordDialog(false)}>Cancel</Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </div>
 
             <Separator />
