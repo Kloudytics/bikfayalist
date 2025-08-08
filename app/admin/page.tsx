@@ -54,18 +54,27 @@ export default function AdminPage() {
       userEmail: session?.user?.email
     })
     
+    // Only run validation once session is loaded
     if (status === 'loading') {
       console.log('Admin: Still loading session...')
       return
     }
     
-    // More robust session validation
-    if (!session?.user) {
-      console.log('Admin: No session found, redirecting to signin')
+    // Check for unauthenticated state
+    if (status === 'unauthenticated' || !session) {
+      console.log('Admin: User not authenticated, redirecting to signin')
       redirect('/auth/signin')
       return
     }
     
+    // Check for missing user data (shouldn't happen if authenticated)
+    if (!session.user) {
+      console.log('Admin: Session exists but no user data, redirecting to signin')
+      redirect('/auth/signin')
+      return
+    }
+    
+    // Check admin role
     if (session.user.role !== 'ADMIN') {
       console.log('Admin: User is not admin, redirecting to home. Role:', session.user.role)
       redirect('/')
