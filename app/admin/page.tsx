@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -29,7 +29,6 @@ import { Users, FileText, Eye, AlertTriangle, Check, X } from 'lucide-react'
 
 export default function AdminPage() {
   const { data: session, status } = useSession()
-  const router = useRouter()
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalListings: 0,
@@ -44,93 +43,35 @@ export default function AdminPage() {
     listingId: null
   })
   const [rejectionReason, setRejectionReason] = useState('')
-  const [redirecting, setRedirecting] = useState(false)
 
   useEffect(() => {
-    console.log('Admin page useEffect:', {
-      status,
-      hasSession: !!session,
-      hasUser: !!session?.user,
-      userId: session?.user?.id,
-      userRole: session?.user?.role,
-      userEmail: session?.user?.email,
-      redirecting
-    })
-    
-    // Prevent multiple redirects
-    if (redirecting) {
-      console.log('Admin: Already redirecting, skipping...')
-      return
+    if (status === 'loading') return
+    if (!session || session.user.role !== 'ADMIN') {
+      redirect('/')
     }
     
-    // Only run validation once session is loaded
-    if (status === 'loading') {
-      console.log('Admin: Still loading session...')
-      return
-    }
-    
-    // Check for unauthenticated state
-    if (status === 'unauthenticated' || !session) {
-      console.log('Admin: User not authenticated, redirecting to signin')
-      setRedirecting(true)
-      router.replace('/auth/signin')
-      return
-    }
-    
-    // Check for missing user data (shouldn't happen if authenticated)
-    if (!session.user) {
-      console.log('Admin: Session exists but no user data, redirecting to signin')
-      setRedirecting(true)
-      router.replace('/auth/signin')
-      return
-    }
-    
-    // Check admin role
-    if (session.user.role !== 'ADMIN') {
-      console.log('Admin: User is not admin, redirecting to home. Role:', session.user.role)
-      setRedirecting(true)
-      router.replace('/')
-      return
-    }
-    
-    console.log('Admin: Valid admin session, fetching data...')
-    // Only fetch data if we have a valid admin session
     fetchStats()
     fetchUsers()
     fetchListings()
-  }, [session, status, redirecting, router])
+  }, [session, status])
 
   const fetchStats = async () => {
     try {
       const response = await fetch('/api/admin/stats')
-      if (!response.ok) {
-        throw new Error(`Stats API failed: ${response.status}`)
-      }
       const data = await response.json()
       setStats(data)
     } catch (error) {
       console.error('Failed to fetch stats:', error)
-      // Set default stats to prevent UI errors
-      setStats({
-        totalUsers: 0,
-        totalListings: 0,
-        activeListings: 0,
-        pendingListings: 0,
-      })
     }
   }
 
   const fetchUsers = async () => {
     try {
       const response = await fetch('/api/admin/users')
-      if (!response.ok) {
-        throw new Error(`Users API failed: ${response.status}`)
-      }
       const data = await response.json()
       setUsers(data)
     } catch (error) {
       console.error('Failed to fetch users:', error)
-      setUsers([])
     }
   }
 
@@ -141,14 +82,10 @@ export default function AdminPage() {
       if (searchQuery) params.append('search', searchQuery)
       
       const response = await fetch(`/api/listings?${params.toString()}`)
-      if (!response.ok) {
-        throw new Error(`Listings API failed: ${response.status}`)
-      }
       const data = await response.json()
       setListings(data.listings || [])
     } catch (error) {
       console.error('Failed to fetch listings:', error)
-      setListings([])
     }
   }
 
@@ -203,10 +140,8 @@ export default function AdminPage() {
     }
   }
 
-  if (status === 'loading' || redirecting) {
-    return <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {status === 'loading' ? 'Loading...' : 'Redirecting...'}
-    </div>
+  if (status === 'loading') {
+    return <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">Loading...</div>
   }
 
   return (
