@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Facebook, Twitter, Instagram, Mail, Phone, MapPin } from 'lucide-react'
+import { Facebook, Twitter, Instagram, Mail } from 'lucide-react'
 
 export default function Footer() {
   return (
@@ -103,16 +103,8 @@ export default function Footer() {
                 <Mail className="w-4 h-4" />
                 <span>support@bikfayalist.com</span>
               </div>
-              <div className="flex items-center space-x-3 text-gray-400">
-                <Phone className="w-4 h-4" />
-                <span>+961 70 977 351</span>
-              </div>
-              <div className="flex items-center space-x-3 text-gray-400">
-                <MapPin className="w-4 h-4" />
-                <span>Bikfaya, Lebanon</span>
-              </div>
             </div>
-            <div className="pt-2">
+            <div className="pt-4">
               <p className="text-xs text-gray-500">
                 Business Hours:<br />
                 Mon-Fri: 9AM-6PM EET<br />

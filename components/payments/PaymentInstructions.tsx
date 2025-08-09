@@ -57,7 +57,7 @@ export function PaymentInstructions() {
               Send money via Whish mobile app to our registered number.
             </p>
             <div className="text-xs text-gray-500 space-y-1">
-              <p className="font-medium">To: +961 XX XXX XXX</p>
+              <p className="font-medium">To: +961 70 977 351</p>
               <p>Please include your payment ID in the message</p>
             </div>
           </div>
@@ -75,9 +75,8 @@ export function PaymentInstructions() {
               Transfer money through OMT branches or mobile app.
             </p>
             <div className="text-xs text-gray-500 space-y-1">
-              <p className="font-medium">Recipient: BikfayaList</p>
-              <p>Phone: +961 XX XXX XXX</p>
-              <p>Include payment reference in transfer notes</p>
+              <p className="font-medium text-orange-600">Coming Soon</p>
+              <p>OMT transfers will be available shortly</p>
             </div>
           </div>
         </div>
@@ -92,7 +91,7 @@ export function PaymentInstructions() {
                 <li>• Always include your payment reference number when making transfers</li>
                 <li>• Cash payments require arrangement for pickup or drop-off</li>
                 <li>• Featured listings are activated immediately after payment confirmation</li>
-                <li>• Contact us via WhatsApp for payment assistance: +961 XX XXX XXX</li>
+                <li>• Contact us via WhatsApp for payment assistance: +961 70 977 351</li>
                 <li>• Payment processing typically takes 1-2 hours during business hours</li>
               </ul>
             </div>
