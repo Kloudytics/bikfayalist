@@ -46,6 +46,7 @@ export async function GET(req: NextRequest) {
     // If userId is provided, show all listings for that user (any status)
     // If status is specified (admin only), filter by that status
     // Otherwise, only show ACTIVE listings for public browsing
+    // Note: Featured filtering is handled separately to combine with status
     if (userId) {
       where.userId = userId
     } else if (status && isAdmin) {
@@ -53,7 +54,8 @@ export async function GET(req: NextRequest) {
     } else if (isAdmin) {
       // Admin sees all listings if no specific status filter
       // No status filter needed
-    } else {
+    } else if (!featured) {
+      // Only set status filter if not filtering by featured (which handles status separately)
       where.status = 'ACTIVE'
     }
 
@@ -78,9 +80,9 @@ export async function GET(req: NextRequest) {
       where.location = { contains: location }
     }
 
-    // Featured-only filtering
+    // Featured-only filtering (must also be ACTIVE for public viewing)
     if (featured) {
-      where.OR = [
+      const featuredConditions = [
         { 
           isFeatured: true,
           featuredUntil: { gt: new Date() }
@@ -89,6 +91,16 @@ export async function GET(req: NextRequest) {
           featured: true
         }
       ]
+      
+      // Combine featured conditions with status requirement for non-admin users
+      if (isAdmin) {
+        where.OR = featuredConditions
+      } else {
+        where.AND = [
+          { status: 'ACTIVE' },
+          { OR: featuredConditions }
+        ]
+      }
     }
 
     // Clean up expired featured listings first
