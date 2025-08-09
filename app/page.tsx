@@ -32,22 +32,35 @@ interface Listing {
 }
 
 export default function HomePage() {
-  const [listings, setListings] = useState<Listing[]>([])
+  const [featuredListings, setFeaturedListings] = useState<Listing[]>([])
+  const [recentListings, setRecentListings] = useState<Listing[]>([])
   const [categories, setCategories] = useState<Category[]>([])
 
   useEffect(() => {
     fetchFeaturedListings()
+    fetchRecentListings()
     fetchCategories()
   }, [])
 
   const fetchFeaturedListings = async () => {
     try {
-      const response = await fetch('/api/listings?limit=8')
+      const response = await fetch('/api/listings?featured=true&limit=8')
       const data = await response.json()
-      setListings(data.listings || [])
+      setFeaturedListings(data.listings || [])
     } catch (error) {
-      console.error('Failed to fetch listings:', error)
-      setListings([])
+      console.error('Failed to fetch featured listings:', error)
+      setFeaturedListings([])
+    }
+  }
+
+  const fetchRecentListings = async () => {
+    try {
+      const response = await fetch('/api/listings?limit=12&page=1')
+      const data = await response.json()
+      setRecentListings(data.listings || [])
+    } catch (error) {
+      console.error('Failed to fetch recent listings:', error)
+      setRecentListings([])
     }
   }
 
@@ -87,6 +100,70 @@ export default function HomePage() {
               </Button>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Featured Listings */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center mb-12">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Featured Listings</h2>
+              <p className="text-lg text-gray-600">Check out these popular items</p>
+            </div>
+            <Button asChild variant="outline">
+              <Link href="/browse">
+                Browse All
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Link>
+            </Button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {Array.isArray(featuredListings) && featuredListings.map((listing) => (
+              <ListingCard key={listing.id} listing={listing} />
+            ))}
+          </div>
+          
+          {/* Show message when no featured listings */}
+          {featuredListings.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-gray-500 mb-4">No featured listings available at the moment</p>
+              <p className="text-sm text-gray-400">Check back soon for highlighted deals!</p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Most Recent Posts */}
+      <section className="py-16 bg-gray-50 border-t border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center mb-12">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Most Recent Posts</h2>
+              <p className="text-lg text-gray-600">Fresh listings from our community</p>
+            </div>
+            <Button asChild variant="outline">
+              <Link href="/browse">
+                Browse All
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Link>
+            </Button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {Array.isArray(recentListings) && recentListings.slice(0, 8).map((listing) => (
+              <ListingCard key={listing.id} listing={listing} />
+            ))}
+          </div>
+          
+          {/* Show message when no recent listings */}
+          {recentListings.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-gray-500 mb-4">No recent listings available</p>
+              <p className="text-sm text-gray-400">Be the first to post something!</p>
+            </div>
+          )}
         </div>
       </section>
 
@@ -156,34 +233,10 @@ export default function HomePage() {
           <div className="text-center mt-8">
             <Button asChild variant="outline">
               <Link href="/browse">
-                View All Categories
+                Browse All Categories
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Link>
             </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Listings */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center mb-12">
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Featured Listings</h2>
-              <p className="text-lg text-gray-600">Check out these popular items</p>
-            </div>
-            <Button asChild variant="outline">
-              <Link href="/browse">
-                View All
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Link>
-            </Button>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {Array.isArray(listings) && listings.map((listing) => (
-              <ListingCard key={listing.id} listing={listing} />
-            ))}
           </div>
         </div>
       </section>

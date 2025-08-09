@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { z } from 'zod'
 import { createRateLimit, validateInput, getSecurityHeaders } from '@/lib/security'
+import { checkListingPermissions, applyPostCreationRules } from '@/lib/business-rules'
 
 const listingSchema = z.object({
   title: z.string().min(1).max(100),
@@ -31,6 +32,7 @@ export async function GET(req: NextRequest) {
   const location = searchParams.get('location')
   const userId = searchParams.get('userId')
   const status = searchParams.get('status')
+  const featured = searchParams.get('featured') === 'true'
   const page = parseInt(searchParams.get('page') || '1')
   const limit = parseInt(searchParams.get('limit') || '12')
 
@@ -76,95 +78,58 @@ export async function GET(req: NextRequest) {
       where.location = { contains: location }
     }
 
-    // Enhanced featured positioning with graceful fallback
-    let listings, total
-    
-    try {
-      // Try enhanced positioning first
-      const featuredListings = await prisma.listing.findMany({
-        where: {
-          ...where,
-          OR: [
-            { 
-              isFeatured: true,
-              featuredUntil: { gt: new Date() }
-            },
-            { 
-              featured: true
-            }
-          ]
+    // Featured-only filtering
+    if (featured) {
+      where.OR = [
+        { 
+          isFeatured: true,
+          featuredUntil: { gt: new Date() }
         },
-        include: {
-          category: true,
-          pricingPlan: true,
-          user: {
-            select: {
-              id: true,
-              name: true,
-              image: true,
-            }
-          }
-        },
-        orderBy: [
-          { createdAt: 'desc' }
-        ],
-      })
-
-      const regularListings = await prisma.listing.findMany({
-        where: {
-          ...where,
-          featured: { not: true },
-          isFeatured: { not: true }
-        },
-        include: {
-          category: true,
-          pricingPlan: true,
-          user: {
-            select: {
-              id: true,
-              name: true,
-              image: true,
-            }
-          }
-        },
-        orderBy: [
-          { createdAt: 'desc' }
-        ],
-      })
-
-      // Simple featured-first approach
-      const allListings = [...featuredListings, ...regularListings]
-      const paginatedListings = allListings.slice((page - 1) * limit, page * limit)
-      
-      listings = paginatedListings
-      total = featuredListings.length + regularListings.length
-      
-    } catch (enhancedError) {
-      console.log('Enhanced query failed, falling back to simple query:', enhancedError)
-      
-      // Fallback to simple query
-      listings = await prisma.listing.findMany({
-        where,
-        include: {
-          category: true,
-          user: {
-            select: {
-              id: true,
-              name: true,
-              image: true,
-            }
-          }
-        },
-        orderBy: [
-          { featured: 'desc' },
-          { createdAt: 'desc' }
-        ],
-        skip: (page - 1) * limit,
-        take: limit,
-      })
-
-      total = await prisma.listing.count({ where })
+        { 
+          featured: true
+        }
+      ]
     }
+
+    // Clean up expired featured listings first
+    await prisma.listing.updateMany({
+      where: {
+        isFeatured: true,
+        featuredUntil: { lte: new Date() }
+      },
+      data: {
+        isFeatured: false,
+        featuredUntil: null
+      }
+    })
+
+    // Query listings with proper featured logic
+    const listings = await prisma.listing.findMany({
+      where,
+      include: {
+        category: true,
+        pricingPlan: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
+          }
+        }
+      },
+      orderBy: [
+        // Featured listings first (both old and new system)
+        { isFeatured: 'desc' },
+        { featured: 'desc' },
+        { featuredPosition: 'asc' }, // Lower position = higher priority
+        { bumpedAt: 'desc' }, // Recently bumped listings
+        { createdAt: 'desc' }
+      ],
+      skip: (page - 1) * limit,
+      take: limit,
+    })
+
+    const total = await prisma.listing.count({ where })
 
     return NextResponse.json({
       listings,
@@ -197,7 +162,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // Check beta post limit (5 posts per account/household)
+    // Check beta post limit (5 posts per account/household) - keeping during beta
     const userListingCount = await prisma.listing.count({
       where: {
         userId: session.user.id,
@@ -232,6 +197,25 @@ export async function POST(req: NextRequest) {
     
     const validatedData = listingSchema.parse(sanitizedData)
 
+    // Apply business rules engine to check permissions
+    const businessRuleResult = await checkListingPermissions(
+      session.user.id,
+      validatedData.categoryId,
+      validatedData.pricingPlanId
+    )
+
+    if (!businessRuleResult.allowed) {
+      return NextResponse.json({
+        error: businessRuleResult.message,
+        requiresPayment: businessRuleResult.requiresPayment,
+        suggestedPlan: businessRuleResult.suggestedPlan,
+        limits: businessRuleResult.limits
+      }, { 
+        status: businessRuleResult.requiresPayment ? 402 : 429, 
+        headers: getSecurityHeaders() 
+      })
+    }
+
     // Get category info to check pricing requirements
     const category = await prisma.category.findUnique({
       where: { id: validatedData.categoryId }
@@ -257,17 +241,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Check if category requires payment and plan is free (with fallback)
-    if (category?.requiresPayment && pricingPlan && pricingPlan.price === 0) {
-      return NextResponse.json(
-        { 
-          error: `${category.name} listings require a premium plan. Please select a paid plan to continue.`,
-          categoryPricing: category.pricingTier || 'PREMIUM',
-          basePrice: category.basePrice || 5
-        }, 
-        { status: 402, headers: getSecurityHeaders() }
-      )
-    }
+    // Category payment check is now handled by business rules engine above
 
     // Calculate expiration date based on pricing plan
     const expiresAt = new Date()
@@ -310,6 +284,13 @@ export async function POST(req: NextRequest) {
         }
       }
     })
+
+    // Apply post-creation business rules (increment counters, trigger hooks, etc.)
+    await applyPostCreationRules(
+      session.user.id,
+      listing.id,
+      validatedData.pricingPlanId
+    )
 
     return NextResponse.json(listing, { 
       status: 201,

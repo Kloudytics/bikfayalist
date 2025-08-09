@@ -19,7 +19,9 @@ import {
   Plus, 
   Eye, 
   TrendingUp,
-  Calendar
+  Calendar,
+  Star,
+  Zap
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { toast } from 'sonner'
@@ -37,6 +39,10 @@ interface Listing {
   views: number
   status: string
   createdAt: string
+  isFeatured?: boolean
+  featured?: boolean
+  featuredUntil?: string
+  bumpedAt?: string
   category: {
     name: string
   }
@@ -181,6 +187,44 @@ export default function UserListingsPage() {
     }
   }
 
+  const handlePromoteListing = async (listingId: string, type: 'FEATURED_WEEK' | 'BUMP_TO_TOP') => {
+    const confirmText = type === 'FEATURED_WEEK' 
+      ? 'This will create a payment request for $5/week for featured placement. Continue?'
+      : 'This will create a payment request for $1 to bump your listing to the top. Continue?'
+    
+    if (!confirm(confirmText)) return
+
+    try {
+      const response = await fetch(`/api/listings/${listingId}/add-ons`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          addOnType: type,
+          quantity: 1
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        toast.success(data.message)
+        
+        // Show additional info about payment
+        setTimeout(() => {
+          toast.info('Check your payments page for payment instructions')
+        }, 2000)
+        
+        fetchUserListings() // Refresh listings to show updated status
+      } else {
+        const error = await response.json()
+        toast.error(error.message || 'Failed to create promotion request')
+      }
+    } catch (error) {
+      console.error('Failed to promote listing:', error)
+      toast.error('Failed to create promotion request')
+    }
+  }
 
   if (status === 'loading') {
     return <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">Loading...</div>
@@ -267,9 +311,21 @@ export default function UserListingsPage() {
                           )}
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900 truncate max-w-[200px]">
-                            {listing.title}
-                          </p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-gray-900 truncate max-w-[200px]">
+                              {listing.title}
+                            </p>
+                            {(listing.isFeatured || listing.featured) && (
+                              <div title="Featured listing">
+                                <Star className="w-4 h-4 text-yellow-500" />
+                              </div>
+                            )}
+                            {listing.bumpedAt && new Date(listing.bumpedAt) > new Date(Date.now() - 24 * 60 * 60 * 1000) && (
+                              <div title="Recently bumped">
+                                <Zap className="w-4 h-4 text-blue-500" />
+                              </div>
+                            )}
+                          </div>
                           <p className="text-sm text-gray-500">{listing.location}</p>
                         </div>
                       </div>
@@ -303,6 +359,7 @@ export default function UserListingsPage() {
                         listing={listing}
                         onDelete={handleDeleteListing}
                         onReactivate={handleReactivateListing}
+                        onPromote={handlePromoteListing}
                       />
                     </TableCell>
                   </TableRow>

@@ -133,10 +133,6 @@ export async function POST(
 
     const addOns = await Promise.all(addOnPromises)
 
-    // Apply add-on effects immediately for demo/testing
-    // In production, this would happen after payment confirmation
-    await applyAddOnEffects(listingId, addOnType, quantity)
-
     return NextResponse.json({
       payment: {
         id: payment.id,
@@ -151,8 +147,9 @@ export async function POST(
         expiresAt: addon.expiresAt,
         isActive: addon.isActive
       })),
-      message: 'Add-on purchased successfully! Effects will be applied once payment is confirmed.',
-      demoMode: 'Effects applied immediately for testing purposes.'
+      message: 'Add-on request created! Please check your payments page for payment instructions. Your listing will be updated once payment is confirmed by an admin.',
+      paymentRequired: true,
+      paymentId: payment.id
     })
 
   } catch (error) {

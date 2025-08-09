@@ -7,7 +7,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { MapPin, Eye, Calendar, Heart } from 'lucide-react'
+import { MapPin, Eye, Calendar, Heart, Star, Zap } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { toast } from 'sonner'
 
@@ -21,6 +21,10 @@ interface ListingCardProps {
     location: string
     views: number
     createdAt: string
+    featured?: boolean
+    isFeatured?: boolean
+    featuredUntil?: string
+    bumpedAt?: string
     category: {
       name: string
     }
@@ -40,6 +44,11 @@ export default function ListingCard({ listing }: ListingCardProps) {
   const [isLoading, setIsLoading] = useState(false)
   const images = JSON.parse(listing.images || '[]')
   const mainImage = images[0] || 'https://images.pexels.com/photos/186461/pexels-photo-186461.jpeg'
+  
+  // Check if listing is featured (either system)
+  const isCurrentlyFeatured = listing.isFeatured || listing.featured
+  const wasBumped = listing.bumpedAt && 
+    new Date(listing.bumpedAt) > new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24 hours
 
   // Create back URL to preserve current browse state
   const backUrl = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`
@@ -120,15 +129,32 @@ export default function ListingCard({ listing }: ListingCardProps) {
 
   return (
     <Link href={listingUrl}>
-      <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 group">
-        <div className="relative h-48 overflow-hidden">
+      <Card className={`overflow-hidden hover:shadow-lg transition-all duration-300 group ${
+        isCurrentlyFeatured ? 'ring-2 ring-yellow-400 ring-opacity-50 shadow-lg' : ''
+      }`}>
+        <div className="relative h-48 overflow-hidden">{/* Featured Overlay */}
+          {isCurrentlyFeatured && (
+            <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/10 to-orange-400/10 z-10" />
+          )}
           <Image
             src={mainImage}
             alt={listing.title}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-300"
           />
-          <div className="absolute top-2 left-2">
+          <div className="absolute top-2 left-2 flex flex-col gap-1 z-20">
+            {isCurrentlyFeatured && (
+              <Badge className="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold">
+                <Star className="w-3 h-3 mr-1" />
+                Featured
+              </Badge>
+            )}
+            {wasBumped && (
+              <Badge className="bg-green-500 hover:bg-green-600 text-white">
+                <Zap className="w-3 h-3 mr-1" />
+                Bumped
+              </Badge>
+            )}
             <Badge variant="secondary">{listing.category.name}</Badge>
           </div>
           <div className="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-sm font-bold">

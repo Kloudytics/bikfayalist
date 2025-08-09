@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { User, Settings, LogOut, Plus, Shield, MessageCircle, Heart, Megaphone, Menu, X, Crown } from 'lucide-react'
+import { User, Settings, LogOut, Plus, Shield, MessageCircle, Heart, Megaphone, Menu, X, Crown, CreditCard } from 'lucide-react'
 
 export default function Navbar() {
   const { data: session } = useSession()
@@ -117,6 +117,12 @@ export default function Navbar() {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
+                      <Link href="/dashboard/payments">
+                        <CreditCard className="mr-2 h-4 w-4" />
+                        Payments & Billing
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
                       <Link href="/dashboard/settings">
                         <Settings className="mr-2 h-4 w-4" />
                         Settings
@@ -135,6 +141,12 @@ export default function Navbar() {
                           <Link href="/admin/messages">
                             <MessageCircle className="mr-2 h-4 w-4" />
                             Message Management
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin/payments">
+                            <CreditCard className="mr-2 h-4 w-4" />
+                            Payment Management
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
@@ -223,6 +235,13 @@ export default function Navbar() {
                     Favorites
                   </Link>
                   <Link 
+                    href="/dashboard/payments" 
+                    className="text-gray-700 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Payments & Billing
+                  </Link>
+                  <Link 
                     href="/dashboard/settings" 
                     className="text-gray-700 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium"
                     onClick={() => setIsMobileMenuOpen(false)}
@@ -249,6 +268,13 @@ export default function Navbar() {
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
                           Message Management
+                        </Link>
+                        <Link 
+                          href="/admin/payments" 
+                          className="text-gray-700 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          Payment Management
                         </Link>
                         <Link 
                           href="/admin/advertisements" 

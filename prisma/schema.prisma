@@ -281,7 +281,10 @@ enum CategoryPricing {
 
 enum PaymentStatus {
   PENDING
+  APPROVED_AWAITING_PAYMENT  // Admin approved, waiting for cash/transfer
+  PAYMENT_RECEIVED          // Payment received, processing
   COMPLETED
+  CANCELLED
   FAILED
   REFUNDED
 }
@@ -318,10 +321,19 @@ model Payment {
   amount            Float
   currency          String        @default("USD")
   status            PaymentStatus @default(PENDING)
-  paymentMethod     String?       // "stripe", "paypal", "manual"
-  transactionId     String?       // External payment ID
+  paymentMethod     String?       // "cash", "whish", "omt", "stripe", "paypal"
+  transactionId     String?       // External payment ID or transfer reference
   description       String?
   metadata          String?       // JSON for additional data
+  
+  // Manual payment fields
+  adminNotes        String?       // Admin notes about payment
+  approvedBy        String?       // Admin user ID who approved
+  approvedAt        DateTime?     // When payment was approved
+  paidAt            DateTime?     // When payment was actually received
+  customerNotes     String?       // Customer notes/instructions
+  paymentReference  String?       // Customer reference number for transfers
+  
   createdAt         DateTime      @default(now())
   completedAt       DateTime?
   
@@ -331,4 +343,5 @@ model Payment {
   @@index([userId])
   @@index([status])
   @@index([createdAt])
+  @@index([approvedBy])
 }
