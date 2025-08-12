@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { initPostHog, analytics } from '@/lib/analytics'
 
-export function PostHogProvider({ children }: { children: React.ReactNode }) {
+function PostHogTracking({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -65,6 +65,14 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
   }, [session])
 
   return <>{children}</>
+}
+
+export function PostHogProvider({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={<>{children}</>}>
+      <PostHogTracking>{children}</PostHogTracking>
+    </Suspense>
+  )
 }
 
 // Hook for easy analytics access
