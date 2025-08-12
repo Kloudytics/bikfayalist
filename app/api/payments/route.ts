@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { analytics } from '@/lib/analytics'
 
 export async function GET(request: NextRequest) {
   try {
@@ -107,6 +108,22 @@ export async function POST(request: NextRequest) {
         }
       })
     }
+
+    // Track payment creation for analytics
+    await analytics.trackServer('payment_completed', session.user.id, {
+      payment_id: payment.id,
+      payment_amount: parseFloat(amount),
+      payment_method: paymentMethod || 'not_specified',
+      payment_description: description,
+      has_reference: !!paymentReference,
+      has_customer_notes: !!customerNotes,
+      addon_count: addOnIds.length,
+      user_type: session.user.role === 'ADMIN' ? 'admin' : 'user',
+      // Lebanese market specific payment methods
+      is_local_payment: ['cash', 'whish', 'omt'].includes(paymentMethod?.toLowerCase() || ''),
+      market: 'lebanon',
+      platform: 'bikfayalist'
+    })
 
     return NextResponse.json({ payment, message: 'Payment request created successfully' })
   } catch (error) {

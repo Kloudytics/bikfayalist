@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Search, MapPin, Eye } from 'lucide-react'
 import Image from 'next/image'
+import { useAnalytics } from '@/components/providers/PostHogProvider'
 
 interface SearchSuggestion {
   id: string
@@ -37,6 +38,7 @@ export default function SearchWithSuggestions({
   const debounceRef = useRef<NodeJS.Timeout | undefined>(undefined)
   const searchRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
+  const { trackSearch } = useAnalytics()
 
   // Debounced search function
   useEffect(() => {
@@ -96,12 +98,18 @@ export default function SearchWithSuggestions({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (query.trim()) {
+      // Track search analytics
+      trackSearch(query.trim())
+      
       setShowSuggestions(false)
       router.push(`/browse?search=${encodeURIComponent(query.trim())}`)
     }
   }
 
   const handleSuggestionClick = (suggestion: SearchSuggestion) => {
+    // Track suggestion click analytics
+    trackSearch(suggestion.title, suggestion.category, suggestion.location)
+    
     setShowSuggestions(false)
     setQuery('')
     router.push(`/listing/${suggestion.id}`)

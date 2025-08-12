@@ -1,6 +1,7 @@
 'use client'
 
 import { SessionProvider } from 'next-auth/react'
+import { PostHogProvider } from '@/components/providers/PostHogProvider'
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -12,7 +13,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       // Ensure session is refreshed on window focus
       refetchOnWindowFocus={true}
     >
-      {children}
+      <PostHogProvider>
+        {children}
+      </PostHogProvider>
     </SessionProvider>
   )
 }

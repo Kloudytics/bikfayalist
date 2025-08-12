@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Phone, Eye, EyeOff } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
+import { useAnalytics } from '@/components/providers/PostHogProvider'
 
 interface PhoneNumberPrivacyProps {
   phoneNumber: string
@@ -14,6 +15,7 @@ interface PhoneNumberPrivacyProps {
 
 export function PhoneNumberPrivacy({ phoneNumber, listingId, userId }: PhoneNumberPrivacyProps) {
   const { data: session } = useSession()
+  const { trackContactReveal } = useAnalytics()
   const [isRevealed, setIsRevealed] = useState(false)
 
   // Don't show anything if no session
@@ -37,6 +39,9 @@ export function PhoneNumberPrivacy({ phoneNumber, listingId, userId }: PhoneNumb
   }
 
   const handleRevealPhone = async () => {
+    // Track client-side analytics for phone reveal
+    trackContactReveal(listingId, 'phone')
+    
     // Log the phone reveal for audit purposes (future feature)
     try {
       await fetch('/api/listings/phone-reveal', {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { getClientIP } from '@/lib/ip'
+import { analytics } from '@/lib/analytics'
 
 export async function POST(
   req: NextRequest,
@@ -69,11 +70,39 @@ export async function POST(
       })
     })
 
-    // Get updated view count
+    // Get updated view count and listing details for analytics
     const updatedListing = await prisma.listing.findUnique({
       where: { id },
-      select: { views: true }
+      select: { 
+        views: true, 
+        categoryId: true, 
+        location: true,
+        price: true,
+        isFeatured: true
+      }
     })
+
+    // Track listing view for analytics
+    if (session?.user) {
+      await analytics.trackServer('category_browsed', session.user.id, {
+        listing_id: id,
+        category_id: updatedListing?.categoryId,
+        location: updatedListing?.location,
+        price: updatedListing?.price || 0,
+        is_featured: updatedListing?.isFeatured || false,
+        view_count: updatedListing?.views || 0,
+        user_type: session.user.role === 'ADMIN' ? 'admin' : 'user',
+        ip_address: clientIP,
+        user_agent: userAgent,
+        // Lebanese market specific tracking
+        is_lebanese_location: updatedListing?.location ? 
+          ['bikfaya', 'beirut', 'tripoli', 'baalbek', 'sidon', 'tyre', 'jounieh', 'zahle']
+            .some(city => updatedListing.location!.toLowerCase().includes(city)) : false,
+        market: 'lebanon',
+        platform: 'bikfayalist',
+        engagement_level: 'medium'
+      })
+    }
 
     return NextResponse.json({ 
       message: 'View recorded',

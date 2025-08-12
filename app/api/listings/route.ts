@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { z } from 'zod'
 import { createRateLimit, validateInput, getSecurityHeaders } from '@/lib/security'
 import { checkListingPermissions, applyPostCreationRules } from '@/lib/business-rules'
+import { analytics } from '@/lib/analytics'
 
 const listingSchema = z.object({
   title: z.string().min(1).max(100),
@@ -142,6 +143,28 @@ export async function GET(req: NextRequest) {
     })
 
     const total = await prisma.listing.count({ where })
+
+    // Track search/browse activity for analytics
+    if (session?.user) {
+      await analytics.trackServer('search_performed', session.user.id, {
+        search_query: search || undefined,
+        category: category || undefined,
+        location: location || undefined,
+        min_price: minPrice ? parseFloat(minPrice) : undefined,
+        max_price: maxPrice ? parseFloat(maxPrice) : undefined,
+        featured_only: featured,
+        page,
+        results_count: listings.length,
+        total_results: total,
+        user_type: session.user.role === 'ADMIN' ? 'admin' : 'user',
+        // Lebanese market tracking
+        is_lebanese_location_search: location ? 
+          ['bikfaya', 'beirut', 'tripoli', 'baalbek', 'sidon', 'tyre', 'jounieh', 'zahle']
+            .some(city => location.toLowerCase().includes(city)) : false,
+        market: 'lebanon',
+        platform: 'bikfayalist'
+      })
+    }
 
     return NextResponse.json({
       listings,
@@ -303,6 +326,25 @@ export async function POST(req: NextRequest) {
       listing.id,
       validatedData.pricingPlanId
     )
+
+    // Track listing creation for analytics
+    await analytics.trackServer('listing_created', session.user.id, {
+      listing_id: listing.id,
+      category_id: validatedData.categoryId,
+      pricing_plan: pricingPlan.name,
+      price: validatedData.price || 0,
+      location: validatedData.location,
+      is_featured: isFeatured,
+      has_images: (validatedData.images?.length || 0) > 0,
+      image_count: validatedData.images?.length || 0,
+      is_business_listing: session.user.role === 'ADMIN' || (session.user as any).isBusinessUser,
+      user_type: session.user.role === 'ADMIN' ? 'admin' : 'user',
+      // Lebanese market specific
+      is_lebanese_location: ['bikfaya', 'beirut', 'tripoli', 'baalbek', 'sidon', 'tyre', 'jounieh', 'zahle']
+        .some(city => validatedData.location.toLowerCase().includes(city)),
+      market: 'lebanon',
+      platform: 'bikfayalist'
+    })
 
     return NextResponse.json(listing, { 
       status: 201,
